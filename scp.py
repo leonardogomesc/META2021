@@ -70,9 +70,10 @@ def method1(universe, subset_weights, subsets, elem_subsets):
     universe = set(universe)
     selected_subsets = []
     selected_elements = set()
+    remaining_elems = universe
 
     while selected_elements != universe:
-        remaining_elems = universe.difference(selected_elements)
+        remaining_elems = remaining_elems.difference(selected_elements)
 
         random.seed(seed)
         rand_elem = random.sample(remaining_elems, 1)[0]
@@ -89,12 +90,20 @@ def method1(universe, subset_weights, subsets, elem_subsets):
 
 # random elem, choose subset with min cost
 def method2(universe, subset_weights, subsets, elem_subsets):
+    subsets_aux = []
+
+    for s in subsets:
+        subsets_aux.append(set(s))
+
+    subsets = subsets_aux
+
     universe = set(universe)
     selected_subsets = []
     selected_elements = set()
+    remaining_elems = universe
 
     while selected_elements != universe:
-        remaining_elems = universe.difference(selected_elements)
+        remaining_elems = remaining_elems.difference(selected_elements)
 
         random.seed(seed)
         rand_elem = random.sample(remaining_elems, 1)[0]
@@ -103,19 +112,27 @@ def method2(universe, subset_weights, subsets, elem_subsets):
 
         selected_subsets.append(subset)
 
-        selected_elements = selected_elements.union(set(subsets[subset]))
+        selected_elements = selected_elements.union(subsets[subset])
 
     return selected_subsets
 
 
 # choose subset with min heuristic value
 def method3(universe, subset_weights, subsets, elem_subsets):
+    subsets_aux = []
+
+    for s in subsets:
+        subsets_aux.append(set(s))
+
+    subsets = subsets_aux
+
     universe = set(universe)
     selected_subsets = []
     selected_elements = set()
+    remaining_elems = universe
 
     while selected_elements != universe:
-        remaining_elems = universe.difference(selected_elements)
+        remaining_elems = remaining_elems.difference(selected_elements)
 
         aval_subsets = []
 
@@ -124,11 +141,11 @@ def method3(universe, subset_weights, subsets, elem_subsets):
 
         aval_subsets = list(set(aval_subsets))
 
-        subset = min(aval_subsets, key=lambda s: subset_weights[s]/len(set(subsets[s]).difference(selected_elements)))
+        subset = min(aval_subsets, key=lambda s: subset_weights[s]/len(subsets[s].difference(selected_elements)))
 
         selected_subsets.append(subset)
 
-        selected_elements = selected_elements.union(set(subsets[subset]))
+        selected_elements = selected_elements.union(subsets[subset])
 
     return selected_subsets
 
@@ -285,8 +302,10 @@ def main():
     print(str(profits) + '/' + str(len(instances)) + ' instances profit from redundancy elimination using CH1\n\n')
 
     print('time: ' + str(time.time()-start))
-'''
+
     # CH2 no redundancy elimination
+    start = time.time()
+
     pd = []
 
     for i in instances:
@@ -312,7 +331,11 @@ def main():
 
     print(str(profits) + '/' + str(len(instances)) + ' instances profit from redundancy elimination using CH2\n\n')
 
+    print('time: ' + str(time.time() - start))
+
     # CH3 no redundancy elimination
+    start = time.time()
+
     pd = []
 
     for i in instances:
@@ -338,13 +361,19 @@ def main():
 
     print(str(profits) + '/' + str(len(instances)) + ' instances profit from redundancy elimination using CH3\n\n')
 
+    print('time: ' + str(time.time() - start))
+
     # CH4
+    start = time.time()
+
     pd = []
 
     for i in instances:
         pd.append(calculate_percentage_deviation_CH4(i[0], i[1]))
 
-    print('CH4 Average Percentage Deviation:  ' + str(sum(pd) / len(pd)) + ' %')'''
+    print('CH4 Average Percentage Deviation:  ' + str(sum(pd) / len(pd)) + ' %')
+
+    print('time: ' + str(time.time() - start))
 
 
 main()
