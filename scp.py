@@ -18,6 +18,7 @@ class Instance:
         total_subsets = int(size[1])
 
         universe = [i for i in range(total_elems)]
+        subset_universe = [i for i in range(total_subsets)]
         subset_weights = []
         subsets = [[] for _ in range(total_subsets)]
         elem_subsets = []
@@ -50,12 +51,14 @@ class Instance:
         file.close()
 
         self.universe = universe
+        self.subset_universe = subset_universe
         self.subset_weights = subset_weights
         self.subsets = subsets
         self.elem_subsets = elem_subsets
         self.best_solution = best_solution
 
         self.universe_set = set(self.universe)
+        self.subset_universe_set = set(self.subset_universe)
 
         subsets_set = []
 
@@ -101,13 +104,32 @@ def remove_redundant(instance, selected_subsets):
     i = 0
 
     while i < len(selected_subsets):
-        removed_subset = selected_subsets.pop(i)
+        selected_elements = selected_elements - instance.matrix[selected_subsets[i]]
 
-        selected_elements = selected_elements - instance.matrix[removed_subset]
+        if 0 not in selected_elements:
+            selected_subsets.pop(i)
+        else:
+            selected_elements = selected_elements + instance.matrix[selected_subsets[i]]
+            i += 1
 
-        if 0 in selected_elements:
-            selected_subsets.insert(i, removed_subset)
-            selected_elements = selected_elements + instance.matrix[removed_subset]
+    return selected_subsets
+
+
+def remove_redundant_neighbour(instance, selected_subsets, selected_elements):
+    selected_subsets = selected_subsets.copy()
+    selected_elements = selected_elements.copy()
+
+    selected_subsets.sort(reverse=True, key=lambda e: instance.subset_weights[e])
+
+    i = 0
+
+    while i < len(selected_subsets):
+        selected_elements = selected_elements - instance.matrix[selected_subsets[i]]
+
+        if 0 not in selected_elements:
+            selected_subsets.pop(i)
+        else:
+            selected_elements = selected_elements + instance.matrix[selected_subsets[i]]
             i += 1
 
     return selected_subsets
@@ -181,6 +203,44 @@ def CH3(instance):
     return selected_subsets
 
 
+def next_neighbour(instance, curr_sol):
+    curr_sol = curr_sol.copy()
+    remaining_subsets = list(instance.subset_universe_set.difference(set(curr_sol)))
+
+    selected_elements = np.zeros(instance.matrix.shape[1])
+
+    for s in curr_sol:
+        selected_elements = selected_elements + instance.matrix[s]
+
+    for i in range(len(curr_sol)):
+        removed_subset = curr_sol.pop(i)
+        selected_elements = selected_elements - instance.matrix[removed_subset]
+
+        for rs in remaining_subsets:
+            selected_elements = selected_elements + instance.matrix[rs]
+
+            if 0 not in selected_elements:
+                # valid solution
+                curr_sol.insert(i, rs)
+                remove_redundant_neighbour(instance, curr_sol, selected_elements)
+                curr_sol.pop(i)
+
+            selected_elements = selected_elements - instance.matrix[rs]
+
+        curr_sol.insert(i, removed_subset)
+        selected_elements = selected_elements + instance.matrix[removed_subset]
+
+
+def first_improvement(instance, selected_subsets):
+    curr_sol = selected_subsets.copy()
+    curr_sol_cost = instance.calculate_cost(curr_sol)
+
+    start = time.time()
+    next_neighbour(instance, curr_sol)
+    print('time: ' + str(time.time()-start))
+
+
+
 def main():
     instances = [['SCP-Instances/scp42.txt', 512],
                  ['SCP-Instances/scp43.txt', 516],
@@ -229,6 +289,12 @@ def main():
 
     for i in instances:
         instance_objs.append(Instance(i[0], i[1]))
+
+    '''obj = 0
+
+    selected_subsets = CH1(instance_objs[obj])
+    selected_subsets_RE = remove_redundant(instance_objs[obj], selected_subsets)
+    first_improvement(instance_objs[obj], selected_subsets)'''
 
     # CH1
     start = time.time()
