@@ -203,7 +203,7 @@ def CH3(instance):
     return selected_subsets
 
 
-def next_neighbour(instance, curr_sol):
+def next_neighbour_2(instance, curr_sol):
     curr_sol = curr_sol.copy()
     remaining_subsets = list(instance.subset_universe_set.difference(set(curr_sol)))
 
@@ -231,7 +231,7 @@ def next_neighbour(instance, curr_sol):
         selected_elements = selected_elements + instance.matrix[removed_subset]
 
 
-def next_neighbour_2(instance, curr_sol):
+def next_neighbour(instance, curr_sol):
     curr_sol = curr_sol.copy()
     remaining_subsets = list(instance.subset_universe_set.difference(set(curr_sol)))
 
@@ -250,78 +250,75 @@ def next_neighbour_2(instance, curr_sol):
         selected_elements = selected_elements - instance.matrix[rs]
 
 
-def first_improvement(instance, selected_subsets):
+def improvement_heuristic_2(instance, selected_subsets, first_improvement=True):
     curr_sol = selected_subsets.copy()
     curr_sol_cost = instance.calculate_cost(curr_sol)
 
-    start = time.time()
+    failures = 0
+    method = 1
 
-    counter = 0
+    while failures < 2:
 
-    for n in next_neighbour_2(instance, curr_sol):
-        if instance.calculate_cost(n) < curr_sol_cost:
-            counter += 1
+        failures += 1
 
-    print(counter)
-    print('time: ' + str(time.time()-start))
+        if method == 1:
+            iter_neighbour = next_neighbour(instance, curr_sol)
+        elif method == 2:
+            iter_neighbour = next_neighbour_2(instance, curr_sol)
+
+        for n in iter_neighbour:
+            new_cost = instance.calculate_cost(n)
+
+            if new_cost < curr_sol_cost:
+                curr_sol = n
+                curr_sol_cost = new_cost
+                failures = 0
+
+                if first_improvement:
+                    break
+
+        print(curr_sol_cost)
+
+        if failures != 0:
+            print('switch')
+            method += 1
+
+            if method > 2:
+                method = 1
+
+    return curr_sol
 
 
-def main():
-    instances = [['SCP-Instances/scp42.txt', 512],
-                 ['SCP-Instances/scp43.txt', 516],
-                 ['SCP-Instances/scp44.txt', 494],
-                 ['SCP-Instances/scp45.txt', 512],
-                 ['SCP-Instances/scp46.txt', 560],
-                 ['SCP-Instances/scp47.txt', 430],
-                 ['SCP-Instances/scp48.txt', 492],
-                 ['SCP-Instances/scp49.txt', 641],
-                 ['SCP-Instances/scp51.txt', 253],
-                 ['SCP-Instances/scp52.txt', 302],
-                 ['SCP-Instances/scp53.txt', 226],
-                 ['SCP-Instances/scp54.txt', 242],
-                 ['SCP-Instances/scp55.txt', 211],
-                 ['SCP-Instances/scp56.txt', 213],
-                 ['SCP-Instances/scp57.txt', 293],
-                 ['SCP-Instances/scp58.txt', 288],
-                 ['SCP-Instances/scp59.txt', 279],
-                 ['SCP-Instances/scp61.txt', 138],
-                 ['SCP-Instances/scp62.txt', 146],
-                 ['SCP-Instances/scp63.txt', 145],
-                 ['SCP-Instances/scp64.txt', 131],
-                 ['SCP-Instances/scp65.txt', 161],
-                 ['SCP-Instances/scpa1.txt', 253],
-                 ['SCP-Instances/scpa2.txt', 252],
-                 ['SCP-Instances/scpa3.txt', 232],
-                 ['SCP-Instances/scpa4.txt', 234],
-                 ['SCP-Instances/scpa5.txt', 236],
-                 ['SCP-Instances/scpb1.txt', 69],
-                 ['SCP-Instances/scpb2.txt', 76],
-                 ['SCP-Instances/scpb3.txt', 80],
-                 ['SCP-Instances/scpb4.txt', 79],
-                 ['SCP-Instances/scpb5.txt', 72],
-                 ['SCP-Instances/scpc1.txt', 227],
-                 ['SCP-Instances/scpc2.txt', 219],
-                 ['SCP-Instances/scpc3.txt', 243],
-                 ['SCP-Instances/scpc4.txt', 219],
-                 ['SCP-Instances/scpc5.txt', 215],
-                 ['SCP-Instances/scpd1.txt', 60],
-                 ['SCP-Instances/scpd2.txt', 66],
-                 ['SCP-Instances/scpd3.txt', 72],
-                 ['SCP-Instances/scpd4.txt', 62],
-                 ['SCP-Instances/scpd5.txt', 61]]
+def improvement_heuristic(instance, selected_subsets, first_improvement=True):
+    curr_sol = selected_subsets.copy()
+    curr_sol_cost = instance.calculate_cost(curr_sol)
 
-    instance_objs = []
+    failures = 0
 
-    for i in instances:
-        instance_objs.append(Instance(i[0], i[1]))
+    while failures < 1:
 
-    obj = 0
+        failures += 1
 
-    selected_subsets = CH1(instance_objs[obj])
-    selected_subsets_RE = remove_redundant(instance_objs[obj], selected_subsets)
-    first_improvement(instance_objs[obj], selected_subsets_RE)
+        iter_neighbour = next_neighbour(instance, curr_sol)
 
-    '''# CH1
+        for n in iter_neighbour:
+            new_cost = instance.calculate_cost(n)
+
+            if new_cost < curr_sol_cost:
+                curr_sol = n
+                curr_sol_cost = new_cost
+                failures = 0
+
+                if first_improvement:
+                    break
+
+        print(curr_sol_cost)
+
+    return curr_sol
+
+
+def assignment1(instance_objs):
+    # CH1
     start = time.time()
 
     pd = []
@@ -422,7 +419,69 @@ def main():
 
     print('CH4 Average Percentage Deviation:  ' + str(sum(pd) / len(pd)) + ' %')
 
-    print('time: ' + str(time.time() - start))'''
+    print('time: ' + str(time.time() - start))
+
+
+def assignment2(instance_objs):
+    obj = 0
+
+    selected_subsets = CH1(instance_objs[obj])
+    selected_subsets_RE = remove_redundant(instance_objs[obj], selected_subsets)
+    improvement_heuristic(instance_objs[obj], selected_subsets_RE, True)
+
+
+def main():
+    instances = [['SCP-Instances/scp42.txt', 512],
+                 ['SCP-Instances/scp43.txt', 516],
+                 ['SCP-Instances/scp44.txt', 494],
+                 ['SCP-Instances/scp45.txt', 512],
+                 ['SCP-Instances/scp46.txt', 560],
+                 ['SCP-Instances/scp47.txt', 430],
+                 ['SCP-Instances/scp48.txt', 492],
+                 ['SCP-Instances/scp49.txt', 641],
+                 ['SCP-Instances/scp51.txt', 253],
+                 ['SCP-Instances/scp52.txt', 302],
+                 ['SCP-Instances/scp53.txt', 226],
+                 ['SCP-Instances/scp54.txt', 242],
+                 ['SCP-Instances/scp55.txt', 211],
+                 ['SCP-Instances/scp56.txt', 213],
+                 ['SCP-Instances/scp57.txt', 293],
+                 ['SCP-Instances/scp58.txt', 288],
+                 ['SCP-Instances/scp59.txt', 279],
+                 ['SCP-Instances/scp61.txt', 138],
+                 ['SCP-Instances/scp62.txt', 146],
+                 ['SCP-Instances/scp63.txt', 145],
+                 ['SCP-Instances/scp64.txt', 131],
+                 ['SCP-Instances/scp65.txt', 161],
+                 ['SCP-Instances/scpa1.txt', 253],
+                 ['SCP-Instances/scpa2.txt', 252],
+                 ['SCP-Instances/scpa3.txt', 232],
+                 ['SCP-Instances/scpa4.txt', 234],
+                 ['SCP-Instances/scpa5.txt', 236],
+                 ['SCP-Instances/scpb1.txt', 69],
+                 ['SCP-Instances/scpb2.txt', 76],
+                 ['SCP-Instances/scpb3.txt', 80],
+                 ['SCP-Instances/scpb4.txt', 79],
+                 ['SCP-Instances/scpb5.txt', 72],
+                 ['SCP-Instances/scpc1.txt', 227],
+                 ['SCP-Instances/scpc2.txt', 219],
+                 ['SCP-Instances/scpc3.txt', 243],
+                 ['SCP-Instances/scpc4.txt', 219],
+                 ['SCP-Instances/scpc5.txt', 215],
+                 ['SCP-Instances/scpd1.txt', 60],
+                 ['SCP-Instances/scpd2.txt', 66],
+                 ['SCP-Instances/scpd3.txt', 72],
+                 ['SCP-Instances/scpd4.txt', 62],
+                 ['SCP-Instances/scpd5.txt', 61]]
+
+    instance_objs = []
+
+    for i in instances:
+        instance_objs.append(Instance(i[0], i[1]))
+
+    assignment1(instance_objs)
+    assignment2(instance_objs)
 
 
 main()
+
