@@ -6,90 +6,128 @@ import time
 seed = 10
 
 
-def read_file(filename):
+class Instance:
 
-    file = open(filename, 'r')
+    def __init__(self, filename, best_solution):
+        file = open(filename, 'r')
 
-    size = file.readline().split()
+        size = file.readline().split()
 
-    n_universe = int(size[0])
-    n_subsets = int(size[1])
+        total_elems = int(size[0])
+        total_subsets = int(size[1])
 
-    universe = [i for i in range(n_universe)]
-    subset_weights = []
-    subsets = [[] for _ in range(n_subsets)]
-    elem_subsets = []
+        universe = [i for i in range(total_elems)]
+        subset_weights = []
+        subsets = [[] for _ in range(total_subsets)]
+        elem_subsets = []
 
-    while len(subset_weights) < n_subsets:
-        line = file.readline().split()
-
-        for e in line:
-            subset_weights.append(int(e))
-
-    curr_elem = 0
-
-    while curr_elem < n_universe:
-        n_elems = int(file.readline().split()[0])
-
-        elem_subset = []
-
-        while n_elems > 0:
+        while len(subset_weights) < total_subsets:
             line = file.readline().split()
 
-            for e in line:
-                subsets[int(e)-1].append(curr_elem)
-                elem_subset.append(int(e)-1)
-                n_elems -= 1
+            for sw in line:
+                subset_weights.append(int(sw))
 
-        elem_subsets.append(elem_subset)
+        curr_elem = 0
 
-        curr_elem += 1
+        while curr_elem < total_elems:
+            n_subsets = int(file.readline().split()[0])
 
-    file.close()
+            elem_subset = []
 
-    return universe, subset_weights, subsets, elem_subsets
+            while n_subsets > 0:
+                line = file.readline().split()
+
+                for s in line:
+                    subsets[int(s) - 1].append(curr_elem)
+                    elem_subset.append(int(s) - 1)
+                    n_subsets -= 1
+
+            elem_subsets.append(elem_subset)
+
+            curr_elem += 1
+
+        file.close()
+
+        self.universe = universe
+        self.subset_weights = subset_weights
+        self.subsets = subsets
+        self.elem_subsets = elem_subsets
+        self.best_solution = best_solution
+
+        self.universe_set = set(self.universe)
+
+        subsets_set = []
+
+        for s in self.subsets:
+            subsets_set.append(set(s))
+
+        self.subsets_set = subsets_set
+
+    def calculate_cost(self, selected_subsets):
+        cost = 0
+
+        for s in selected_subsets:
+            cost += self.subset_weights[s]
+
+        return cost
+
+    def calculate_percentage_deviation(self, selected_subsets):
+        cost = self.calculate_cost(selected_subsets)
+
+        pd = (abs(cost - self.best_solution) * 100) / self.best_solution
+
+        return pd
 
 
-def calculate_cost(selected_subsets, subset_weights):
-    cost = 0
+def remove_redundant(instance, selected_subsets):
+    selected_subsets = selected_subsets.copy()
 
-    for e in selected_subsets:
-        cost += subset_weights[e]
+    selected_subsets.sort(reverse=True, key=lambda e: instance.subset_weights[e])
 
-    return cost
+    i = 0
+
+    while i < len(selected_subsets):
+        removed_subset = selected_subsets.pop(i)
+
+        selected_elements = []
+
+        for s in selected_subsets:
+            selected_elements.extend(instance.subsets[s])
+
+        selected_elements = set(selected_elements)
+
+        if selected_elements != instance.universe_set:
+            selected_subsets.insert(i, removed_subset)
+            i += 1
+
+    return selected_subsets
 
 
 # random
-def method1(universe, subset_weights, subsets, elem_subsets):
-    subsets_aux = []
-
-    for s in subsets:
-        subsets_aux.append(set(s))
-
-    subsets = subsets_aux
-    universe = set(universe)
+def CH1(instance):
     selected_subsets = []
     selected_elements = set()
-    remaining_elems = universe
+    remaining_elems = instance.universe_set
 
-    while selected_elements != universe:
+    while selected_elements != instance.universe_set:
         remaining_elems = remaining_elems.difference(selected_elements)
 
         random.seed(seed)
         rand_elem = random.sample(remaining_elems, 1)[0]
 
         random.seed(seed)
-        rand_subset = random.choice(elem_subsets[rand_elem])
+        rand_subset = random.choice(instance.elem_subsets[rand_elem])
 
         selected_subsets.append(rand_subset)
 
-        selected_elements = selected_elements.union(subsets[rand_subset])
+        selected_elements = selected_elements.union(instance.subsets_set[rand_subset])
 
     return selected_subsets
 
 
+'''
 # random elem, choose subset with min cost
-def method2(universe, subset_weights, subsets, elem_subsets):
+def CH2(instance):
     subsets_aux = []
 
     for s in subsets:
@@ -141,37 +179,11 @@ def method3(universe, subset_weights, subsets, elem_subsets):
 
         aval_subsets = list(set(aval_subsets))
 
-        subset = min(aval_subsets, key=lambda s: subset_weights[s]/len(subsets[s].difference(selected_elements)))
+        subset = min(aval_subsets, key=lambda s: subset_weights[s] / len(subsets[s].difference(selected_elements)))
 
         selected_subsets.append(subset)
 
         selected_elements = selected_elements.union(subsets[subset])
-
-    return selected_subsets
-
-
-def remove_redundant(universe, subset_weights, subsets, elem_subsets, selected_subsets):
-    selected_subsets = selected_subsets.copy()
-
-    universe = set(universe)
-
-    selected_subsets.sort(reverse=True, key=lambda e: subset_weights[e])
-
-    i = 0
-
-    while i < len(selected_subsets):
-        removed_subset = selected_subsets.pop(i)
-
-        selected_elements = []
-
-        for s in selected_subsets:
-            selected_elements.extend(subsets[s])
-
-        selected_elements = set(selected_elements)
-
-        if selected_elements != universe:
-            selected_subsets.insert(i, removed_subset)
-            i += 1
 
     return selected_subsets
 
@@ -185,7 +197,7 @@ def calculate_percentage_deviation_CH1(file, best_solution, remove_redundancy=Fa
 
     cost = calculate_cost(selected_subsets, subset_weights)
 
-    pd = (abs(cost - best_solution)*100)/best_solution
+    pd = (abs(cost - best_solution) * 100) / best_solution
 
     return pd
 
@@ -199,7 +211,7 @@ def calculate_percentage_deviation_CH2(file, best_solution, remove_redundancy=Fa
 
     cost = calculate_cost(selected_subsets, subset_weights)
 
-    pd = (abs(cost - best_solution)*100)/best_solution
+    pd = (abs(cost - best_solution) * 100) / best_solution
 
     return pd
 
@@ -213,20 +225,22 @@ def calculate_percentage_deviation_CH3(file, best_solution, remove_redundancy=Fa
 
     cost = calculate_cost(selected_subsets, subset_weights)
 
-    pd = (abs(cost - best_solution)*100)/best_solution
+    pd = (abs(cost - best_solution) * 100) / best_solution
 
     return pd
 
 
 def calculate_percentage_deviation_CH4(file, best_solution):
     universe, subset_weights, subsets, elem_subsets = read_file(file)
-    selected_subsets = remove_redundant(universe, subset_weights, subsets, elem_subsets, [i for i in range(len(subsets))])
+    selected_subsets = remove_redundant(universe, subset_weights, subsets, elem_subsets,
+                                        [i for i in range(len(subsets))])
 
     cost = calculate_cost(selected_subsets, subset_weights)
 
     pd = (abs(cost - best_solution) * 100) / best_solution
 
     return pd
+'''
 
 
 def main():
@@ -273,103 +287,51 @@ def main():
                  ['SCP-Instances/scpd4.txt', 62],
                  ['SCP-Instances/scpd5.txt', 61]]
 
-    # CH1 no redundancy elimination
+    instance_objs = []
+
+    for i in instances:
+        instance_objs.append(Instance(i[0], i[1]))
+
+    # CH1
     start = time.time()
 
     pd = []
+    pd_RE = []
 
-    for i in instances:
-        pd.append(calculate_percentage_deviation_CH1(i[0], i[1]))
+    for instance in instance_objs:
+        selected_subsets = CH1(instance)
+        selected_subsets_RE = remove_redundant(instance, selected_subsets)
 
-    print('CH1 Average Percentage Deviation:  ' + str(sum(pd)/len(pd)) + ' %')
+        percentage_deviation = instance.calculate_percentage_deviation(selected_subsets)
+        percentage_deviation_RE = instance.calculate_percentage_deviation(selected_subsets_RE)
 
-    # CH1 redundancy elimination
-    pd2 = []
+        pd.append(percentage_deviation)
+        pd_RE.append(percentage_deviation_RE)
 
-    for i in instances:
-        pd2.append(calculate_percentage_deviation_CH1(i[0], i[1], remove_redundancy=True))
-
-    print('CH1R Average Percentage Deviation: ' + str(sum(pd2)/len(pd2)) + ' %')
-
-    # CH1 check redundancy profit
-
-    profits = 0
-
-    for i in range(len(instances)):
-        if pd2[i] < pd[i]:
-            profits += 1
-
-    print(str(profits) + '/' + str(len(instances)) + ' instances profit from redundancy elimination using CH1\n\n')
-
-    print('time: ' + str(time.time()-start))
-
-    # CH2 no redundancy elimination
-    start = time.time()
-
-    pd = []
-
-    for i in instances:
-        pd.append(calculate_percentage_deviation_CH2(i[0], i[1]))
-
-    print('CH2 Average Percentage Deviation:  ' + str(sum(pd) / len(pd)) + ' %')
-
-    # CH2 redundancy elimination
-    pd2 = []
-
-    for i in instances:
-        pd2.append(calculate_percentage_deviation_CH2(i[0], i[1], remove_redundancy=True))
-
-    print('CH2R Average Percentage Deviation: ' + str(sum(pd2) / len(pd2)) + ' %')
-
-    # CH2 check redundancy profit
+    print('CH1 Average Percentage Deviation:  ' + str(sum(pd) / len(pd)) + ' %')
+    print('CH1 RE Average Percentage Deviation: ' + str(sum(pd_RE) / len(pd_RE)) + ' %')
 
     profits = 0
 
-    for i in range(len(instances)):
-        if pd2[i] < pd[i]:
+    for i in range(len(instance_objs)):
+        if pd_RE[i] < pd[i]:
             profits += 1
 
-    print(str(profits) + '/' + str(len(instances)) + ' instances profit from redundancy elimination using CH2\n\n')
+    print(str(profits) + '/' + str(len(instance_objs)) + ' instances profit from redundancy elimination using CH1')
 
-    print('time: ' + str(time.time() - start))
-
-    # CH3 no redundancy elimination
-    start = time.time()
-
-    pd = []
-
-    for i in instances:
-        pd.append(calculate_percentage_deviation_CH3(i[0], i[1]))
-
-    print('CH3 Average Percentage Deviation:  ' + str(sum(pd) / len(pd)) + ' %')
-
-    # CH3 redundancy elimination
-    pd2 = []
-
-    for i in instances:
-        pd2.append(calculate_percentage_deviation_CH3(i[0], i[1], remove_redundancy=True))
-
-    print('CH3R Average Percentage Deviation: ' + str(sum(pd2) / len(pd2)) + ' %')
-
-    # CH3 check redundancy profit
-
-    profits = 0
-
-    for i in range(len(instances)):
-        if pd2[i] < pd[i]:
-            profits += 1
-
-    print(str(profits) + '/' + str(len(instances)) + ' instances profit from redundancy elimination using CH3\n\n')
-
-    print('time: ' + str(time.time() - start))
+    print('time: ' + str(time.time() - start) + '\n\n')
 
     # CH4
     start = time.time()
 
     pd = []
 
-    for i in instances:
-        pd.append(calculate_percentage_deviation_CH4(i[0], i[1]))
+    for instance in instance_objs:
+        selected_subsets = remove_redundant(instance, [i for i in range(len(instance.subsets))])
+
+        percentage_deviation = instance.calculate_percentage_deviation(selected_subsets)
+
+        pd.append(percentage_deviation)
 
     print('CH4 Average Percentage Deviation:  ' + str(sum(pd) / len(pd)) + ' %')
 
@@ -377,4 +339,3 @@ def main():
 
 
 main()
-
