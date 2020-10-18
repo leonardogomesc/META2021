@@ -222,7 +222,7 @@ def next_neighbour(instance, curr_sol):
             if 0 not in selected_elements:
                 # valid solution
                 curr_sol.insert(i, rs)
-                remove_redundant_neighbour(instance, curr_sol, selected_elements)
+                yield remove_redundant_neighbour(instance, curr_sol, selected_elements)
                 curr_sol.pop(i)
 
             selected_elements = selected_elements - instance.matrix[rs]
@@ -236,7 +236,14 @@ def first_improvement(instance, selected_subsets):
     curr_sol_cost = instance.calculate_cost(curr_sol)
 
     start = time.time()
-    next_neighbour(instance, curr_sol)
+
+    counter = 0
+
+    for n in next_neighbour(instance, curr_sol):
+        if instance.calculate_cost(n) < curr_sol_cost:
+            counter += 1
+
+    print(counter)
     print('time: ' + str(time.time()-start))
 
 
@@ -290,13 +297,13 @@ def main():
     for i in instances:
         instance_objs.append(Instance(i[0], i[1]))
 
-    '''obj = 0
+    obj = 0
 
     selected_subsets = CH1(instance_objs[obj])
     selected_subsets_RE = remove_redundant(instance_objs[obj], selected_subsets)
-    first_improvement(instance_objs[obj], selected_subsets)'''
+    first_improvement(instance_objs[obj], selected_subsets_RE)
 
-    # CH1
+    '''# CH1
     start = time.time()
 
     pd = []
@@ -397,7 +404,7 @@ def main():
 
     print('CH4 Average Percentage Deviation:  ' + str(sum(pd) / len(pd)) + ' %')
 
-    print('time: ' + str(time.time() - start))
+    print('time: ' + str(time.time() - start))'''
 
 
 main()
