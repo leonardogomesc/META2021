@@ -66,6 +66,10 @@ class Instance:
 
         matrix = np.zeros((len(self.subsets), len(self.elem_subsets)))
 
+        for s in range(matrix.shape[0]):
+            for e in self.subsets[s]:
+                matrix[s][e] = 1
+
         self.matrix = matrix
 
     def calculate_cost(self, selected_subsets):
@@ -89,20 +93,21 @@ def remove_redundant(instance, selected_subsets):
 
     selected_subsets.sort(reverse=True, key=lambda e: instance.subset_weights[e])
 
+    selected_elements = np.zeros(instance.matrix.shape[1])
+
+    for s in selected_subsets:
+        selected_elements = selected_elements + instance.matrix[s]
+
     i = 0
 
     while i < len(selected_subsets):
         removed_subset = selected_subsets.pop(i)
 
-        selected_elements = []
+        selected_elements = selected_elements - instance.matrix[removed_subset]
 
-        for s in selected_subsets:
-            selected_elements.extend(instance.subsets[s])
-
-        selected_elements = set(selected_elements)
-
-        if selected_elements != instance.universe_set:
+        if 0 in selected_elements:
             selected_subsets.insert(i, removed_subset)
+            selected_elements = selected_elements + instance.matrix[removed_subset]
             i += 1
 
     return selected_subsets
@@ -167,8 +172,7 @@ def CH3(instance):
 
         aval_subsets = list(set(aval_subsets))
 
-        subset = min(aval_subsets, key=lambda s: instance.subset_weights[s] / len(
-            instance.subsets_set[s].difference(selected_elements)))
+        subset = min(aval_subsets, key=lambda s: instance.subset_weights[s] / len(instance.subsets_set[s].difference(selected_elements)))
 
         selected_subsets.append(subset)
 
