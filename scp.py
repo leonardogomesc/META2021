@@ -91,35 +91,18 @@ class Instance:
         return pd
 
 
-def remove_redundant(instance, selected_subsets):
+def remove_redundant(instance, selected_subsets, selected_elements=None):
     selected_subsets = selected_subsets.copy()
 
     selected_subsets.sort(reverse=True, key=lambda e: instance.subset_weights[e])
 
-    selected_elements = np.zeros(instance.matrix.shape[1])
+    if selected_elements is None:
+        selected_elements = np.zeros(instance.matrix.shape[1])
 
-    for s in selected_subsets:
-        selected_elements = selected_elements + instance.matrix[s]
-
-    i = 0
-
-    while i < len(selected_subsets):
-        selected_elements = selected_elements - instance.matrix[selected_subsets[i]]
-
-        if 0 not in selected_elements:
-            selected_subsets.pop(i)
-        else:
-            selected_elements = selected_elements + instance.matrix[selected_subsets[i]]
-            i += 1
-
-    return selected_subsets
-
-
-def remove_redundant_neighbour(instance, selected_subsets, selected_elements):
-    selected_subsets = selected_subsets.copy()
-    selected_elements = selected_elements.copy()
-
-    selected_subsets.sort(reverse=True, key=lambda e: instance.subset_weights[e])
+        for s in selected_subsets:
+            selected_elements = selected_elements + instance.matrix[s]
+    else:
+        selected_elements = selected_elements.copy()
 
     i = 0
 
@@ -222,7 +205,7 @@ def next_neighbour_2(instance, curr_sol):
             if 0 not in selected_elements:
                 # valid solution
                 curr_sol.insert(i, rs)
-                yield remove_redundant_neighbour(instance, curr_sol, selected_elements)
+                yield remove_redundant(instance, curr_sol, selected_elements)
                 curr_sol.pop(i)
 
             selected_elements = selected_elements - instance.matrix[rs]
@@ -244,7 +227,7 @@ def next_neighbour(instance, curr_sol):
         curr_sol.append(rs)
         selected_elements = selected_elements + instance.matrix[rs]
 
-        yield remove_redundant_neighbour(instance, curr_sol, selected_elements)
+        yield remove_redundant(instance, curr_sol, selected_elements)
 
         curr_sol.pop()
         selected_elements = selected_elements - instance.matrix[rs]
