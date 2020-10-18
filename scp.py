@@ -231,6 +231,25 @@ def next_neighbour(instance, curr_sol):
         selected_elements = selected_elements + instance.matrix[removed_subset]
 
 
+def next_neighbour_2(instance, curr_sol):
+    curr_sol = curr_sol.copy()
+    remaining_subsets = list(instance.subset_universe_set.difference(set(curr_sol)))
+
+    selected_elements = np.zeros(instance.matrix.shape[1])
+
+    for s in curr_sol:
+        selected_elements = selected_elements + instance.matrix[s]
+
+    for rs in remaining_subsets:
+        curr_sol.append(rs)
+        selected_elements = selected_elements + instance.matrix[rs]
+
+        yield remove_redundant_neighbour(instance, curr_sol, selected_elements)
+
+        curr_sol.pop()
+        selected_elements = selected_elements - instance.matrix[rs]
+
+
 def first_improvement(instance, selected_subsets):
     curr_sol = selected_subsets.copy()
     curr_sol_cost = instance.calculate_cost(curr_sol)
@@ -239,13 +258,12 @@ def first_improvement(instance, selected_subsets):
 
     counter = 0
 
-    for n in next_neighbour(instance, curr_sol):
+    for n in next_neighbour_2(instance, curr_sol):
         if instance.calculate_cost(n) < curr_sol_cost:
             counter += 1
 
     print(counter)
     print('time: ' + str(time.time()-start))
-
 
 
 def main():
