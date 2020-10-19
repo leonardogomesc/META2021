@@ -256,6 +256,8 @@ def next_neighbour(instance, curr_sol):
     curr_sol = curr_sol.copy()
     remaining_subsets = list(instance.subset_universe_set.difference(set(curr_sol)))
 
+    remaining_subsets.sort(key=lambda e: instance.subset_weights[e]/len(instance.subsets[e]))
+
     selected_elements = np.zeros(instance.matrix.shape[1])
 
     for s in curr_sol:
