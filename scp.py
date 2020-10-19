@@ -94,7 +94,7 @@ class Instance:
 def remove_redundant(instance, selected_subsets, selected_elements=None):
     selected_subsets = selected_subsets.copy()
 
-    selected_subsets.sort(reverse=True, key=lambda e: instance.subset_weights[e])
+    selected_subsets.sort(reverse=True, key=lambda e: instance.subset_weights[e]/len(instance.subsets[e]))
 
     if selected_elements is None:
         selected_elements = np.zeros(instance.matrix.shape[1])
