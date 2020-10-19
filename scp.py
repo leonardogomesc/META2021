@@ -405,6 +405,8 @@ def assignment1(instance_objs):
 
 
 def assignment2(instance_objs):
+    statistic_data = [[] for _ in range(len(instance_objs))]
+
     ################################
     #           CH1 + FI           #
     ################################
@@ -425,6 +427,7 @@ def assignment2(instance_objs):
 
         pd.append(percentage_deviation)
         pd_IH.append(percentage_deviation_IH)
+        statistic_data[counter].append(instance.calculate_cost(selected_subsets_IH))
 
         counter += 1
         # print(counter)
@@ -462,6 +465,7 @@ def assignment2(instance_objs):
 
         pd.append(percentage_deviation)
         pd_IH.append(percentage_deviation_IH)
+        statistic_data[counter].append(instance.calculate_cost(selected_subsets_IH))
 
         counter += 1
         # print(counter)
@@ -499,6 +503,7 @@ def assignment2(instance_objs):
 
         pd.append(percentage_deviation)
         pd_IH.append(percentage_deviation_IH)
+        statistic_data[counter].append(instance.calculate_cost(selected_subsets_IH))
 
         counter += 1
         # print(counter)
@@ -536,6 +541,7 @@ def assignment2(instance_objs):
 
         pd.append(percentage_deviation)
         pd_IH.append(percentage_deviation_IH)
+        statistic_data[counter].append(instance.calculate_cost(selected_subsets_IH))
 
         counter += 1
         # print(counter)
@@ -573,6 +579,7 @@ def assignment2(instance_objs):
 
         pd.append(percentage_deviation)
         pd_IH.append(percentage_deviation_IH)
+        statistic_data[counter].append(instance.calculate_cost(selected_subsets_IH))
 
         counter += 1
         # print(counter)
@@ -610,6 +617,7 @@ def assignment2(instance_objs):
 
         pd.append(percentage_deviation)
         pd_IH.append(percentage_deviation_IH)
+        statistic_data[counter].append(instance.calculate_cost(selected_subsets_IH))
 
         counter += 1
         # print(counter)
@@ -648,6 +656,7 @@ def assignment2(instance_objs):
 
         pd.append(percentage_deviation)
         pd_IH.append(percentage_deviation_IH)
+        statistic_data[counter].append(instance.calculate_cost(selected_subsets_IH))
 
         counter += 1
         # print(counter)
@@ -686,6 +695,7 @@ def assignment2(instance_objs):
 
         pd.append(percentage_deviation)
         pd_IH.append(percentage_deviation_IH)
+        statistic_data[counter].append(instance.calculate_cost(selected_subsets_IH))
 
         counter += 1
         # print(counter)
@@ -702,6 +712,9 @@ def assignment2(instance_objs):
     print(str(profits) + '/' + str(len(instance_objs)) + ' instances profit from local search using CH1 + RE + BI')
 
     print('time: ' + str(time.time() - start) + '\n\n')
+
+    print(statistic_data)
+    print(np.array(statistic_data).shape)
 
 
 def main():
