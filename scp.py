@@ -718,9 +718,8 @@ def assignment2(instance_objs):
 
     print('time: ' + str(time.time() - start) + '\n\n')
 
-    print(statistic_data)
-    print(np.array(statistic_data).shape)
-
+    print('Statistic Data: \n')
+    
     for i in statistic_data:
         for i2 in i:
             print(str(i2) + ' ', end='')
