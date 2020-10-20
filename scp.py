@@ -451,44 +451,6 @@ def assignment2(instance_objs):
     print('time: ' + str(time.time() - start) + '\n\n')
 
     ################################
-    #           CH1 + BI           #
-    ################################
-
-    start = time.time()
-
-    pd = []
-    pd_IH = []
-
-    counter = 0
-
-    for instance in instance_objs:
-        selected_subsets = CH1(instance)
-        selected_subsets_IH = improvement_heuristic(instance, selected_subsets, first_improvement=False)
-
-        percentage_deviation = instance.calculate_percentage_deviation(selected_subsets)
-        percentage_deviation_IH = instance.calculate_percentage_deviation(selected_subsets_IH)
-
-        pd.append(percentage_deviation)
-        pd_IH.append(percentage_deviation_IH)
-        statistic_data[counter].append(instance.calculate_cost(selected_subsets_IH))
-
-        counter += 1
-        # print(counter)
-
-    print('CH1 Average Percentage Deviation: ' + str(sum(pd) / len(pd)) + ' %')
-    print('CH1 + BI Average Percentage Deviation:  ' + str(sum(pd_IH) / len(pd_IH)) + ' %')
-
-    profits = 0
-
-    for i in range(len(instance_objs)):
-        if pd_IH[i] < pd[i]:
-            profits += 1
-
-    print(str(profits) + '/' + str(len(instance_objs)) + ' instances profit from local search using CH1 + BI')
-
-    print('time: ' + str(time.time() - start) + '\n\n')
-
-    ################################
     #           CH2 + FI           #
     ################################
 
@@ -523,6 +485,121 @@ def assignment2(instance_objs):
             profits += 1
 
     print(str(profits) + '/' + str(len(instance_objs)) + ' instances profit from local search using CH2 + FI')
+
+    print('time: ' + str(time.time() - start) + '\n\n')
+
+    ################################
+    #           CH3 + FI           #
+    ################################
+
+    start = time.time()
+
+    pd = []
+    pd_IH = []
+
+    counter = 0
+
+    for instance in instance_objs:
+        selected_subsets = CH3(instance)
+        selected_subsets_IH = improvement_heuristic(instance, selected_subsets, first_improvement=True)
+
+        percentage_deviation = instance.calculate_percentage_deviation(selected_subsets)
+        percentage_deviation_IH = instance.calculate_percentage_deviation(selected_subsets_IH)
+
+        pd.append(percentage_deviation)
+        pd_IH.append(percentage_deviation_IH)
+        statistic_data[counter].append(instance.calculate_cost(selected_subsets_IH))
+
+        counter += 1
+        # print(counter)
+
+    print('CH3 Average Percentage Deviation: ' + str(sum(pd) / len(pd)) + ' %')
+    print('CH3 + FI Average Percentage Deviation:  ' + str(sum(pd_IH) / len(pd_IH)) + ' %')
+
+    profits = 0
+
+    for i in range(len(instance_objs)):
+        if pd_IH[i] < pd[i]:
+            profits += 1
+
+    print(str(profits) + '/' + str(len(instance_objs)) + ' instances profit from local search using CH3 + FI')
+
+    print('time: ' + str(time.time() - start) + '\n\n')
+
+    #####################################
+    #           CH1 + RE + FI           #
+    #####################################
+
+    start = time.time()
+
+    pd = []
+    pd_IH = []
+
+    counter = 0
+
+    for instance in instance_objs:
+        selected_subsets = CH1(instance)
+        selected_subsets = remove_redundant(instance, selected_subsets)
+        selected_subsets_IH = improvement_heuristic(instance, selected_subsets, first_improvement=True)
+
+        percentage_deviation = instance.calculate_percentage_deviation(selected_subsets)
+        percentage_deviation_IH = instance.calculate_percentage_deviation(selected_subsets_IH)
+
+        pd.append(percentage_deviation)
+        pd_IH.append(percentage_deviation_IH)
+        statistic_data[counter].append(instance.calculate_cost(selected_subsets_IH))
+
+        counter += 1
+        # print(counter)
+
+    print('CH1 + RE Average Percentage Deviation: ' + str(sum(pd) / len(pd)) + ' %')
+    print('CH1 + RE + FI Average Percentage Deviation:  ' + str(sum(pd_IH) / len(pd_IH)) + ' %')
+
+    profits = 0
+
+    for i in range(len(instance_objs)):
+        if pd_IH[i] < pd[i]:
+            profits += 1
+
+    print(str(profits) + '/' + str(len(instance_objs)) + ' instances profit from local search using CH1 + RE + FI')
+
+    print('time: ' + str(time.time() - start) + '\n\n')
+
+    ################################
+    #           CH1 + BI           #
+    ################################
+
+    start = time.time()
+
+    pd = []
+    pd_IH = []
+
+    counter = 0
+
+    for instance in instance_objs:
+        selected_subsets = CH1(instance)
+        selected_subsets_IH = improvement_heuristic(instance, selected_subsets, first_improvement=False)
+
+        percentage_deviation = instance.calculate_percentage_deviation(selected_subsets)
+        percentage_deviation_IH = instance.calculate_percentage_deviation(selected_subsets_IH)
+
+        pd.append(percentage_deviation)
+        pd_IH.append(percentage_deviation_IH)
+        statistic_data[counter].append(instance.calculate_cost(selected_subsets_IH))
+
+        counter += 1
+        # print(counter)
+
+    print('CH1 Average Percentage Deviation: ' + str(sum(pd) / len(pd)) + ' %')
+    print('CH1 + BI Average Percentage Deviation:  ' + str(sum(pd_IH) / len(pd_IH)) + ' %')
+
+    profits = 0
+
+    for i in range(len(instance_objs)):
+        if pd_IH[i] < pd[i]:
+            profits += 1
+
+    print(str(profits) + '/' + str(len(instance_objs)) + ' instances profit from local search using CH1 + BI')
 
     print('time: ' + str(time.time() - start) + '\n\n')
 
@@ -565,44 +642,6 @@ def assignment2(instance_objs):
     print('time: ' + str(time.time() - start) + '\n\n')
 
     ################################
-    #           CH3 + FI           #
-    ################################
-
-    start = time.time()
-
-    pd = []
-    pd_IH = []
-
-    counter = 0
-
-    for instance in instance_objs:
-        selected_subsets = CH3(instance)
-        selected_subsets_IH = improvement_heuristic(instance, selected_subsets, first_improvement=True)
-
-        percentage_deviation = instance.calculate_percentage_deviation(selected_subsets)
-        percentage_deviation_IH = instance.calculate_percentage_deviation(selected_subsets_IH)
-
-        pd.append(percentage_deviation)
-        pd_IH.append(percentage_deviation_IH)
-        statistic_data[counter].append(instance.calculate_cost(selected_subsets_IH))
-
-        counter += 1
-        # print(counter)
-
-    print('CH3 Average Percentage Deviation: ' + str(sum(pd) / len(pd)) + ' %')
-    print('CH3 + FI Average Percentage Deviation:  ' + str(sum(pd_IH) / len(pd_IH)) + ' %')
-
-    profits = 0
-
-    for i in range(len(instance_objs)):
-        if pd_IH[i] < pd[i]:
-            profits += 1
-
-    print(str(profits) + '/' + str(len(instance_objs)) + ' instances profit from local search using CH3 + FI')
-
-    print('time: ' + str(time.time() - start) + '\n\n')
-
-    ################################
     #           CH3 + BI           #
     ################################
 
@@ -637,45 +676,6 @@ def assignment2(instance_objs):
             profits += 1
 
     print(str(profits) + '/' + str(len(instance_objs)) + ' instances profit from local search using CH3 + BI')
-
-    print('time: ' + str(time.time() - start) + '\n\n')
-
-    #####################################
-    #           CH1 + RE + FI           #
-    #####################################
-
-    start = time.time()
-
-    pd = []
-    pd_IH = []
-
-    counter = 0
-
-    for instance in instance_objs:
-        selected_subsets = CH1(instance)
-        selected_subsets = remove_redundant(instance, selected_subsets)
-        selected_subsets_IH = improvement_heuristic(instance, selected_subsets, first_improvement=True)
-
-        percentage_deviation = instance.calculate_percentage_deviation(selected_subsets)
-        percentage_deviation_IH = instance.calculate_percentage_deviation(selected_subsets_IH)
-
-        pd.append(percentage_deviation)
-        pd_IH.append(percentage_deviation_IH)
-        statistic_data[counter].append(instance.calculate_cost(selected_subsets_IH))
-
-        counter += 1
-        # print(counter)
-
-    print('CH1 + RE Average Percentage Deviation: ' + str(sum(pd) / len(pd)) + ' %')
-    print('CH1 + RE + FI Average Percentage Deviation:  ' + str(sum(pd_IH) / len(pd_IH)) + ' %')
-
-    profits = 0
-
-    for i in range(len(instance_objs)):
-        if pd_IH[i] < pd[i]:
-            profits += 1
-
-    print(str(profits) + '/' + str(len(instance_objs)) + ' instances profit from local search using CH1 + RE + FI')
 
     print('time: ' + str(time.time() - start) + '\n\n')
 
@@ -720,6 +720,11 @@ def assignment2(instance_objs):
 
     print(statistic_data)
     print(np.array(statistic_data).shape)
+
+    for i in statistic_data:
+        for i2 in i:
+            print(str(i2) + ' ', end='')
+        print('')
 
 
 def main():
