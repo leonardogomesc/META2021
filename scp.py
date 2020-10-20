@@ -91,7 +91,7 @@ class Instance:
         return pd
 
 
-def remove_redundant(instance, selected_subsets, selected_elements=None):
+def remove_redundant(instance, selected_subsets, selected_elements=None, return_cost=False):
     selected_subsets = selected_subsets.copy()
 
     selected_subsets.sort(reverse=True, key=lambda e: instance.subset_weights[e]/len(instance.subsets[e]))
@@ -104,6 +104,8 @@ def remove_redundant(instance, selected_subsets, selected_elements=None):
     else:
         selected_elements = selected_elements.copy()
 
+    cost = 0
+
     i = 0
 
     while i < len(selected_subsets):
@@ -113,7 +115,11 @@ def remove_redundant(instance, selected_subsets, selected_elements=None):
             selected_subsets.pop(i)
         else:
             selected_elements = selected_elements + instance.matrix[selected_subsets[i]]
+            cost += instance.subset_weights[selected_subsets[i]]
             i += 1
+
+    if return_cost:
+        return selected_subsets, cost
 
     return selected_subsets
 
@@ -267,7 +273,7 @@ def next_neighbour(instance, curr_sol):
         curr_sol.append(rs)
         selected_elements = selected_elements + instance.matrix[rs]
 
-        yield remove_redundant(instance, curr_sol, selected_elements)
+        yield remove_redundant(instance, curr_sol, selected_elements, return_cost=True)
 
         curr_sol.pop()
         selected_elements = selected_elements - instance.matrix[rs]
@@ -277,21 +283,19 @@ def improvement_heuristic(instance, selected_subsets, first_improvement=True):
     curr_sol = selected_subsets.copy()
     curr_sol_cost = instance.calculate_cost(curr_sol)
 
-    failures = 0
+    failed = False
 
-    while failures < 1:
-
-        failures += 1
+    while not failed:
+        failed = True
 
         iter_neighbour = next_neighbour(instance, curr_sol)
 
-        for n in iter_neighbour:
-            new_cost = instance.calculate_cost(n)
+        for n, new_cost in iter_neighbour:
 
             if new_cost < curr_sol_cost:
                 curr_sol = n
                 curr_sol_cost = new_cost
-                failures = 0
+                failed = False
 
                 if first_improvement:
                     break
