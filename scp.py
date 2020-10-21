@@ -91,30 +91,38 @@ class Instance:
         return pd
 
 
-def remove_redundant(instance, selected_subsets, selected_elements=None, return_cost=False):
+def remove_redundant(instance, selected_subsets, element_count=None, return_cost=False):
+    # copy selected subsets
     selected_subsets = selected_subsets.copy()
 
+    # sort by cost per element
     selected_subsets.sort(key=lambda e: instance.subset_weights[e]/len(instance.subsets[e]))
 
-    if selected_elements is None:
-        selected_elements = np.zeros(instance.matrix.shape[1])
+    # calculate or copy array containing the number of times each element has been selected
+    if element_count is None:
+        element_count = np.zeros(instance.matrix.shape[1])
 
         for s in selected_subsets:
-            selected_elements = selected_elements + instance.matrix[s]
+            element_count = element_count + instance.matrix[s]
     else:
-        selected_elements = selected_elements.copy()
+        element_count = element_count.copy()
 
+    # calculate cost
     cost = 0
 
     i = len(selected_subsets) - 1
 
     while i >= 0:
-        selected_elements = selected_elements - instance.matrix[selected_subsets[i]]
+        # try to remove subset
+        element_count = element_count - instance.matrix[selected_subsets[i]]
 
-        if 0 not in selected_elements:
+        # check if there is an uncovered element
+        if 0 not in element_count:
+            # remove subset if there is not an uncovered element
             selected_subsets.pop(i)
         else:
-            selected_elements = selected_elements + instance.matrix[selected_subsets[i]]
+            # add subset if there is an uncovered element
+            element_count = element_count + instance.matrix[selected_subsets[i]]
             cost += instance.subset_weights[selected_subsets[i]]
 
         i -= 1
@@ -207,44 +215,55 @@ def CH3(instance):
 
 
 def next_neighbour(instance, curr_sol):
+    # copy solution list
     curr_sol = curr_sol.copy()
+
+    # calculate list of subsets that are not in the current solution
     remaining_subsets = list(instance.subset_universe_set.difference(set(curr_sol)))
 
+    # sort by cost per element
     remaining_subsets.sort(key=lambda e: instance.subset_weights[e]/len(instance.subsets[e]))
 
-    selected_elements = np.zeros(instance.matrix.shape[1])
+    # calculate array containing the number of times each element has been selected
+    element_count = np.zeros(instance.matrix.shape[1])
 
     for s in curr_sol:
-        selected_elements = selected_elements + instance.matrix[s]
+        element_count = element_count + instance.matrix[s]
 
     for rs in remaining_subsets:
+        # append a subset to the current solution
         curr_sol.append(rs)
-        selected_elements = selected_elements + instance.matrix[rs]
+        element_count = element_count + instance.matrix[rs]
 
-        yield remove_redundant(instance, curr_sol, selected_elements, return_cost=True)
+        # remove redundancy
+        yield remove_redundant(instance, curr_sol, element_count, return_cost=True)
 
+        # remove the subset that was added
         curr_sol.pop()
-        selected_elements = selected_elements - instance.matrix[rs]
+        element_count = element_count - instance.matrix[rs]
 
 
 def improvement_heuristic(instance, selected_subsets, first_improvement=True):
-    curr_sol = selected_subsets.copy()
-    curr_sol_cost = instance.calculate_cost(curr_sol)
+    curr_sol = selected_subsets.copy()  # current solution
+    curr_sol_cost = instance.calculate_cost(curr_sol)  # current solution cost
 
     failed = False
 
     while not failed:
         failed = True
 
+        # create neighbour generator
         iter_neighbour = next_neighbour(instance, curr_sol)
 
-        for n, new_cost in iter_neighbour:
+        for new_sol, new_sol_cost in iter_neighbour:
 
-            if new_cost < curr_sol_cost:
-                curr_sol = n
-                curr_sol_cost = new_cost
+            # check if new solution has a lower cost than current solution
+            if new_sol_cost < curr_sol_cost:
+                curr_sol = new_sol
+                curr_sol_cost = new_sol_cost
                 failed = False
 
+                # if first improvement take a step
                 if first_improvement:
                     break
 
@@ -252,6 +271,8 @@ def improvement_heuristic(instance, selected_subsets, first_improvement=True):
 
 
 def assignment1(instance_objs):
+    print('Assignment 1\n')
+
     # CH1
     start = time.time()
 
@@ -269,7 +290,7 @@ def assignment1(instance_objs):
         pd_RE.append(percentage_deviation_RE)
 
     print('CH1 Average Percentage Deviation:  ' + str(sum(pd) / len(pd)) + ' %')
-    print('CH1 RE Average Percentage Deviation: ' + str(sum(pd_RE) / len(pd_RE)) + ' %')
+    print('CH1 + RE Average Percentage Deviation: ' + str(sum(pd_RE) / len(pd_RE)) + ' %')
 
     profits = 0
 
@@ -298,7 +319,7 @@ def assignment1(instance_objs):
         pd_RE.append(percentage_deviation_RE)
 
     print('CH2 Average Percentage Deviation:  ' + str(sum(pd) / len(pd)) + ' %')
-    print('CH2 RE Average Percentage Deviation: ' + str(sum(pd_RE) / len(pd_RE)) + ' %')
+    print('CH2 + RE Average Percentage Deviation: ' + str(sum(pd_RE) / len(pd_RE)) + ' %')
 
     profits = 0
 
@@ -327,7 +348,7 @@ def assignment1(instance_objs):
         pd_RE.append(percentage_deviation_RE)
 
     print('CH3 Average Percentage Deviation:  ' + str(sum(pd) / len(pd)) + ' %')
-    print('CH3 RE Average Percentage Deviation: ' + str(sum(pd_RE) / len(pd_RE)) + ' %')
+    print('CH3 + RE Average Percentage Deviation: ' + str(sum(pd_RE) / len(pd_RE)) + ' %')
 
     profits = 0
 
@@ -353,10 +374,12 @@ def assignment1(instance_objs):
 
     print('Only RE Average Percentage Deviation:  ' + str(sum(pd) / len(pd)) + ' %')
 
-    print('time: ' + str(time.time() - start))
+    print('time: ' + str(time.time() - start) + '\n\n\n\n')
 
 
 def assignment2(instance_objs):
+    print('Assignment 2\n')
+
     statistic_data = [[] for _ in range(len(instance_objs))]
 
     ################################
@@ -723,7 +746,7 @@ def main():
         instance_objs.append(Instance(i[0], i[1]))
 
     assignment1(instance_objs)
-    # assignment2(instance_objs)
+    assignment2(instance_objs)
 
 
 main()
