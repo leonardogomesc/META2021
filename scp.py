@@ -127,136 +127,83 @@ def remove_redundant(instance, selected_subsets, selected_elements=None, return_
 
 # choose subset with min heuristic value
 def CH1(instance):
-    selected_subsets = []
-    selected_elements = set()
-    remaining_elems = instance.universe_set
+    selected_subsets = []  # index of selected subsets
+    covered_elements = set()  # covered elements
+    uncovered_elements = instance.universe_set  # uncovered elements
 
-    while selected_elements != instance.universe_set:
-        remaining_elems = remaining_elems.difference(selected_elements)
+    while covered_elements != instance.universe_set:
+        # calculate uncovered elements
+        uncovered_elements = uncovered_elements.difference(covered_elements)
 
+        # calculate subsets with at least one uncovered element
         aval_subsets = []
 
-        for e in remaining_elems:
+        for e in uncovered_elements:
             aval_subsets.extend(instance.elem_subsets[e])
 
         aval_subsets = list(set(aval_subsets))
 
-        subset = min(aval_subsets, key=lambda s: instance.subset_weights[s] / len(instance.subsets_set[s].difference(selected_elements)))
+        # choose subset with min cost
+        subset = min(aval_subsets, key=lambda s: instance.subset_weights[s] / len(instance.subsets_set[s].difference(covered_elements)))
 
+        # add subset to list
         selected_subsets.append(subset)
 
-        selected_elements = selected_elements.union(instance.subsets_set[subset])
+        # update covered elements
+        covered_elements = covered_elements.union(instance.subsets_set[subset])
 
     return selected_subsets
 
 
-# choose element with min num of subsets covering it then subset with min heuristic value
+# choose element with min num of subsets containing it then subset with min heuristic value
 def CH2(instance):
-    selected_subsets = []
-    selected_elements = set()
+    selected_subsets = []  # index of selected subsets
+    covered_elements = set()  # covered elements
+    uncovered_elements = instance.universe_set  # uncovered elements
 
-    remaining_elems = instance.universe_set
+    while covered_elements != instance.universe_set:
+        # calculate uncovered elements
+        uncovered_elements = uncovered_elements.difference(covered_elements)
 
-    while selected_elements != instance.universe_set:
-        remaining_elems = remaining_elems.difference(selected_elements)
+        # calculate uncovered element with lowest amount of subsets containing it
+        elem = min(uncovered_elements, key=lambda e: len(instance.elem_subsets[e]))
 
-        elem = min(remaining_elems, key=lambda e: len(instance.elem_subsets[e]))
-
+        # choose subset containing elem with the lowest cost
         subset = min(instance.elem_subsets[elem], key=lambda s: instance.subset_weights[s])
 
+        # add subset to list
         selected_subsets.append(subset)
 
-        selected_elements = selected_elements.union(instance.subsets_set[subset])
+        # update covered elements
+        covered_elements = covered_elements.union(instance.subsets_set[subset])
 
     return selected_subsets
 
 
 # random elem, choose subset with min cost
 def CH3(instance):
-    selected_subsets = []
-    selected_elements = set()
-    remaining_elems = instance.universe_set
+    selected_subsets = []  # index of selected subsets
+    covered_elements = set()  # covered elements
+    uncovered_elements = instance.universe_set  # uncovered elements
 
-    while selected_elements != instance.universe_set:
-        remaining_elems = remaining_elems.difference(selected_elements)
+    while covered_elements != instance.universe_set:
+        # calculate uncovered elements
+        uncovered_elements = uncovered_elements.difference(covered_elements)
 
+        # select random uncovered element
         random.seed(seed)
-        rand_elem = random.sample(remaining_elems, 1)[0]
+        rand_elem = random.sample(uncovered_elements, 1)[0]
 
+        # choose subset containing elem with the lowest cost
         subset = min(instance.elem_subsets[rand_elem], key=lambda s: instance.subset_weights[s])
 
+        # add subset to list
         selected_subsets.append(subset)
 
-        selected_elements = selected_elements.union(instance.subsets_set[subset])
+        # update covered elements
+        covered_elements = covered_elements.union(instance.subsets_set[subset])
 
     return selected_subsets
-
-
-'''def next_neighbour_2(instance, curr_sol):
-    curr_sol = curr_sol.copy()
-    remaining_subsets = list(instance.subset_universe_set.difference(set(curr_sol)))
-
-    selected_elements = np.zeros(instance.matrix.shape[1])
-
-    for s in curr_sol:
-        selected_elements = selected_elements + instance.matrix[s]
-
-    for i in range(len(curr_sol)):
-        removed_subset = curr_sol.pop(i)
-        selected_elements = selected_elements - instance.matrix[removed_subset]
-
-        for rs in remaining_subsets:
-            selected_elements = selected_elements + instance.matrix[rs]
-
-            if 0 not in selected_elements:
-                # valid solution
-                curr_sol.insert(i, rs)
-                yield remove_redundant(instance, curr_sol, selected_elements)
-                curr_sol.pop(i)
-
-            selected_elements = selected_elements - instance.matrix[rs]
-
-        curr_sol.insert(i, removed_subset)
-        selected_elements = selected_elements + instance.matrix[removed_subset]
-
-
-def improvement_heuristic_2(instance, selected_subsets, first_improvement=True):
-    curr_sol = selected_subsets.copy()
-    curr_sol_cost = instance.calculate_cost(curr_sol)
-
-    failures = 0
-    method = 1
-
-    while failures < 2:
-
-        failures += 1
-
-        if method == 1:
-            iter_neighbour = next_neighbour(instance, curr_sol)
-        elif method == 2:
-            iter_neighbour = next_neighbour_2(instance, curr_sol)
-
-        for n in iter_neighbour:
-            new_cost = instance.calculate_cost(n)
-
-            if new_cost < curr_sol_cost:
-                curr_sol = n
-                curr_sol_cost = new_cost
-                failures = 0
-
-                if first_improvement:
-                    break
-
-        print(curr_sol_cost)
-
-        if failures != 0:
-            print('switch')
-            method += 1
-
-            if method > 2:
-                method = 1
-
-    return curr_sol'''
 
 
 def next_neighbour(instance, curr_sol):
@@ -775,8 +722,8 @@ def main():
     for i in instances:
         instance_objs.append(Instance(i[0], i[1]))
 
-    # assignment1(instance_objs)
-    assignment2(instance_objs)
+    assignment1(instance_objs)
+    # assignment2(instance_objs)
 
 
 main()
