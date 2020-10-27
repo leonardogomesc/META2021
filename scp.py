@@ -136,13 +136,9 @@ def remove_redundant(instance, selected_subsets, element_count=None, return_cost
 # choose subset with min heuristic value
 def CH1(instance):
     selected_subsets = []  # index of selected subsets
-    covered_elements = set()  # covered elements
     uncovered_elements = instance.universe_set  # uncovered elements
 
-    while covered_elements != instance.universe_set:
-        # calculate uncovered elements
-        uncovered_elements = uncovered_elements.difference(covered_elements)
-
+    while len(uncovered_elements) > 0:
         # calculate subsets with at least one uncovered element
         aval_subsets = []
 
@@ -152,13 +148,13 @@ def CH1(instance):
         aval_subsets = list(set(aval_subsets))
 
         # choose subset with min cost
-        subset = min(aval_subsets, key=lambda s: instance.subset_weights[s] / len(instance.subsets_set[s].difference(covered_elements)))
+        subset = min(aval_subsets, key=lambda s: instance.subset_weights[s] / len(instance.subsets_set[s].intersection(uncovered_elements)))
 
         # add subset to list
         selected_subsets.append(subset)
 
-        # update covered elements
-        covered_elements = covered_elements.union(instance.subsets_set[subset])
+        # calculate uncovered elements
+        uncovered_elements = uncovered_elements.difference(instance.subsets_set[subset])
 
     return selected_subsets
 
@@ -166,13 +162,9 @@ def CH1(instance):
 # choose element with min num of subsets containing it then subset with min heuristic value
 def CH2(instance):
     selected_subsets = []  # index of selected subsets
-    covered_elements = set()  # covered elements
     uncovered_elements = instance.universe_set  # uncovered elements
 
-    while covered_elements != instance.universe_set:
-        # calculate uncovered elements
-        uncovered_elements = uncovered_elements.difference(covered_elements)
-
+    while len(uncovered_elements) > 0:
         # calculate uncovered element with lowest amount of subsets containing it
         elem = min(uncovered_elements, key=lambda e: len(instance.elem_subsets[e]))
 
@@ -182,8 +174,8 @@ def CH2(instance):
         # add subset to list
         selected_subsets.append(subset)
 
-        # update covered elements
-        covered_elements = covered_elements.union(instance.subsets_set[subset])
+        # update uncovered elements
+        uncovered_elements = uncovered_elements.difference(instance.subsets_set[subset])
 
     return selected_subsets
 
@@ -191,13 +183,9 @@ def CH2(instance):
 # random elem, choose subset with min cost
 def CH3(instance):
     selected_subsets = []  # index of selected subsets
-    covered_elements = set()  # covered elements
     uncovered_elements = instance.universe_set  # uncovered elements
 
-    while covered_elements != instance.universe_set:
-        # calculate uncovered elements
-        uncovered_elements = uncovered_elements.difference(covered_elements)
-
+    while len(uncovered_elements) > 0:
         # select random uncovered element
         random.seed(seed)
         rand_elem = random.sample(uncovered_elements, 1)[0]
@@ -208,8 +196,31 @@ def CH3(instance):
         # add subset to list
         selected_subsets.append(subset)
 
-        # update covered elements
-        covered_elements = covered_elements.union(instance.subsets_set[subset])
+        # update uncovered elements
+        uncovered_elements = uncovered_elements.difference(instance.subsets_set[subset])
+
+    return selected_subsets
+
+
+# random
+def CHR(instance):
+    selected_subsets = []  # index of selected subsets
+    uncovered_elements = instance.universe_set  # uncovered elements
+
+    while len(uncovered_elements) > 0:
+        # select random uncovered element
+        # random.seed(seed)
+        rand_elem = random.sample(uncovered_elements, 1)[0]
+
+        # choose random subset containing elem
+        # random.seed(seed)
+        subset = random.choice(instance.elem_subsets[rand_elem])
+
+        # add subset to list
+        selected_subsets.append(subset)
+
+        # update uncovered elements
+        uncovered_elements = uncovered_elements.difference(instance.subsets_set[subset])
 
     return selected_subsets
 
