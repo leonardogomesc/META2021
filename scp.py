@@ -101,7 +101,7 @@ class Instance:
         return element_count
 
 
-def remove_redundant(instance, selected_subsets, element_count=None, return_cost=False):
+def remove_redundant(instance, selected_subsets, element_count=None, return_extra=False):
     # copy selected subsets
     selected_subsets = selected_subsets.copy()
 
@@ -134,8 +134,8 @@ def remove_redundant(instance, selected_subsets, element_count=None, return_cost
 
         i -= 1
 
-    if return_cost:
-        return selected_subsets, cost
+    if return_extra:
+        return selected_subsets, cost, element_count
 
     return selected_subsets
 
@@ -232,7 +232,7 @@ def CHR(instance):
     return selected_subsets
 
 
-def next_neighbour(instance, curr_sol):
+def next_neighbour(instance, curr_sol, element_count=None):
     # copy solution list
     curr_sol = curr_sol.copy()
 
@@ -243,7 +243,10 @@ def next_neighbour(instance, curr_sol):
     remaining_subsets.sort(key=lambda e: instance.subset_weights[e]/len(instance.subsets[e]))
 
     # calculate array containing the number of times each element has been selected
-    element_count = instance.calculate_element_count(curr_sol)
+    if element_count is None:
+        element_count = instance.calculate_element_count(curr_sol)
+    else:
+        element_count.copy()
 
     for rs in remaining_subsets:
         # append a subset to the current solution
@@ -251,14 +254,14 @@ def next_neighbour(instance, curr_sol):
         element_count = element_count + instance.matrix[rs]
 
         # remove redundancy
-        yield remove_redundant(instance, curr_sol, element_count, return_cost=True)
+        yield remove_redundant(instance, curr_sol, element_count=element_count, return_extra=True)
 
         # remove the subset that was added
         curr_sol.pop()
         element_count = element_count - instance.matrix[rs]
 
 
-def next_random_neighbour(instance, curr_sol, n_subsets=1):
+def next_random_neighbour(instance, curr_sol, element_count=None, n_subsets=1):
     # copy solution list
     curr_sol = curr_sol.copy()
 
@@ -268,7 +271,10 @@ def next_random_neighbour(instance, curr_sol, n_subsets=1):
     n_subsets = min(n_subsets, len(remaining_subsets))
 
     # calculate array containing the number of times each element has been selected
-    element_count = instance.calculate_element_count(curr_sol)
+    if element_count is None:
+        element_count = instance.calculate_element_count(curr_sol)
+    else:
+        element_count.copy()
 
     while True:
         new_subsets = random.sample(remaining_subsets, n_subsets)
@@ -277,7 +283,7 @@ def next_random_neighbour(instance, curr_sol, n_subsets=1):
         count_addition = np.sum(instance.matrix[new_subsets], axis=0)
         element_count = element_count + count_addition
 
-        yield remove_redundant(instance, curr_sol, element_count, return_cost=True)
+        yield remove_redundant(instance, curr_sol, element_count=element_count, return_extra=True)
 
         del curr_sol[-n_subsets:]
         element_count = element_count - count_addition
@@ -286,21 +292,20 @@ def next_random_neighbour(instance, curr_sol, n_subsets=1):
 def improvement_heuristic(instance, selected_subsets, first_improvement=True):
     curr_sol = selected_subsets.copy()  # current solution
     curr_sol_cost = instance.calculate_cost(curr_sol)  # current solution cost
+    curr_element_count = instance.calculate_element_count(curr_sol)
 
     failed = False
 
     while not failed:
         failed = True
 
-        # create neighbour generator
-        iter_neighbour = next_neighbour(instance, curr_sol)
-
-        for new_sol, new_sol_cost in iter_neighbour:
+        for new_sol, new_sol_cost, new_element_count in next_neighbour(instance, curr_sol, element_count=curr_element_count):
 
             # check if new solution has a lower cost than current solution
             if new_sol_cost < curr_sol_cost:
                 curr_sol = new_sol
                 curr_sol_cost = new_sol_cost
+                curr_element_count = new_element_count
                 failed = False
 
                 # if first improvement take a step
@@ -315,20 +320,21 @@ def simulated_annealing(instance, selected_subsets):
     fixed_iter = 10000
     n_subsets = 50
 
-    temperature = 1
+    temperature = 432
     cooling_ratio = 0.99
 
     timestep = 0
 
     curr_sol = selected_subsets.copy()  # current solution
     curr_sol_cost = instance.calculate_cost(curr_sol)  # current solution cost
-    curr_iter = next_random_neighbour(instance, curr_sol, n_subsets)
+    curr_element_count = instance.calculate_element_count(curr_sol)
+    curr_iter = next_random_neighbour(instance, curr_sol, element_count=curr_element_count, n_subsets=n_subsets)
 
     while iter_without_change < 1:
         iter_without_change += 1
 
         for _ in range(fixed_iter):
-            new_sol, new_sol_cost = next(curr_iter)
+            new_sol, new_sol_cost, new_element_count = next(curr_iter)
 
             update_sol = False
 
@@ -346,7 +352,8 @@ def simulated_annealing(instance, selected_subsets):
             if update_sol:
                 curr_sol = new_sol
                 curr_sol_cost = new_sol_cost
-                curr_iter = next_random_neighbour(instance, new_sol, n_subsets)
+                curr_element_count = new_element_count
+                curr_iter = next_random_neighbour(instance, new_sol, element_count=new_element_count, n_subsets=n_subsets)
                 iter_without_change = 0
 
         temperature *= cooling_ratio
@@ -791,7 +798,7 @@ def test_neighbours(instance):
     equal_but_diff = 0
     worse = 0
 
-    for new_sol, new_sol_cost in next_neighbour(instance, sol):
+    for new_sol, new_sol_cost, _ in next_neighbour(instance, sol):
 
         if new_sol_cost < cost:
             better += 1
@@ -823,7 +830,7 @@ def test_random_neighbours(instance):
 
     max_diff = 0
 
-    for i, (new_sol, new_sol_cost) in enumerate(next_random_neighbour(instance, sol, 50)):
+    for i, (new_sol, new_sol_cost, _) in enumerate(next_random_neighbour(instance, sol, n_subsets=50)):
 
         if new_sol_cost < cost:
             better += 1
@@ -899,17 +906,23 @@ def main():
     for i in instances:
         instance_objs.append(Instance(i[0], i[1]))
 
-    # assignment1(instance_objs)
-    # assignment2(instance_objs)
+    assignment1(instance_objs)
+    assignment2(instance_objs)
 
-    for instance in instance_objs:
+    # for instance in instance_objs:
         # test_neighbours(instance)
-        test_random_neighbours(instance)
+        # test_random_neighbours(instance)
 
 
 main()
 
-# 150
+'''
+150
+
+temperature = -150/ln(0.5) = 216
+
+2*temperature = 216*2 = 432
+'''
 
 '''
 # plt.axis([-50,50,0,10000])
