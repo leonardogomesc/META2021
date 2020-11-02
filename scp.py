@@ -3,6 +3,8 @@
 import random
 import time
 import numpy as np
+import matplotlib.pyplot as plt
+import math
 
 seed = 10
 
@@ -90,6 +92,14 @@ class Instance:
 
         return pd
 
+    def calculate_element_count(self, selected_subsets):
+        element_count = np.zeros(self.matrix.shape[1])
+
+        for s in selected_subsets:
+            element_count = element_count + self.matrix[s]
+
+        return element_count
+
 
 def remove_redundant(instance, selected_subsets, element_count=None, return_cost=False):
     # copy selected subsets
@@ -100,10 +110,7 @@ def remove_redundant(instance, selected_subsets, element_count=None, return_cost
 
     # calculate or copy array containing the number of times each element has been selected
     if element_count is None:
-        element_count = np.zeros(instance.matrix.shape[1])
-
-        for s in selected_subsets:
-            element_count = element_count + instance.matrix[s]
+        element_count = instance.calculate_element_count(selected_subsets)
     else:
         element_count = element_count.copy()
 
@@ -236,10 +243,7 @@ def next_neighbour(instance, curr_sol):
     remaining_subsets.sort(key=lambda e: instance.subset_weights[e]/len(instance.subsets[e]))
 
     # calculate array containing the number of times each element has been selected
-    element_count = np.zeros(instance.matrix.shape[1])
-
-    for s in curr_sol:
-        element_count = element_count + instance.matrix[s]
+    element_count = instance.calculate_element_count(curr_sol)
 
     for rs in remaining_subsets:
         # append a subset to the current solution
@@ -263,14 +267,8 @@ def next_random_neighbour(instance, curr_sol, n_subsets=1):
 
     n_subsets = min(n_subsets, len(remaining_subsets))
 
-    print(n_subsets)
-    print(len(remaining_subsets))
-
     # calculate array containing the number of times each element has been selected
-    element_count = np.zeros(instance.matrix.shape[1])
-
-    for s in curr_sol:
-        element_count = element_count + instance.matrix[s]
+    element_count = instance.calculate_element_count(curr_sol)
 
     while True:
         new_subsets = random.sample(remaining_subsets, n_subsets)
@@ -308,6 +306,51 @@ def improvement_heuristic(instance, selected_subsets, first_improvement=True):
                 # if first improvement take a step
                 if first_improvement:
                     break
+
+    return curr_sol
+
+
+def simulated_annealing(instance, selected_subsets):
+    iter_without_change = 0
+    fixed_iter = 10000
+    n_subsets = 50
+
+    temperature = 1
+    cooling_ratio = 0.99
+
+    timestep = 0
+
+    curr_sol = selected_subsets.copy()  # current solution
+    curr_sol_cost = instance.calculate_cost(curr_sol)  # current solution cost
+    curr_iter = next_random_neighbour(instance, curr_sol, n_subsets)
+
+    while iter_without_change < 1:
+        iter_without_change += 1
+
+        for _ in range(fixed_iter):
+            new_sol, new_sol_cost = next(curr_iter)
+
+            update_sol = False
+
+            if new_sol_cost < curr_sol_cost:
+                update_sol = True
+            elif new_sol_cost == curr_sol_cost:
+                if set(new_sol) != set(curr_sol):
+                    update_sol = True
+            else:
+                p = math.exp(-(new_sol_cost-curr_sol_cost)/temperature)
+
+                if random.random() < p:
+                    update_sol = True
+
+            if update_sol:
+                curr_sol = new_sol
+                curr_sol_cost = new_sol_cost
+                curr_iter = next_random_neighbour(instance, new_sol, n_subsets)
+                iter_without_change = 0
+
+        temperature *= cooling_ratio
+        timestep += 1
 
     return curr_sol
 
@@ -778,6 +821,8 @@ def test_random_neighbours(instance):
     equal_but_diff = 0
     worse = 0
 
+    max_diff = 0
+
     for i, (new_sol, new_sol_cost) in enumerate(next_random_neighbour(instance, sol, 50)):
 
         if new_sol_cost < cost:
@@ -790,6 +835,9 @@ def test_random_neighbours(instance):
         else:
             worse += 1
 
+        if new_sol_cost - cost > max_diff:
+            max_diff = new_sol_cost - cost
+
         if i == len(instance.subsets) * 10 - 1:
             break
 
@@ -798,6 +846,7 @@ def test_random_neighbours(instance):
     print('equal_but_diff: ' + str(equal_but_diff))
     print('worse: ' + str(worse))
     print('total: ' + str(better + equal + worse))
+    print('max_diff: ' + str(max_diff))
     print()
 
 
@@ -859,4 +908,19 @@ def main():
 
 
 main()
+
+# 150
+
+'''
+# plt.axis([-50,50,0,10000])
+plt.ion()
+plt.show()
+
+x = np.arange(-50, 51)
+for pow in range(1,5):   # plot x^1, x^2, ..., x^4
+    y = [Xi**pow for Xi in x]
+    plt.plot(x, y)
+    plt.draw()
+    plt.pause(5)
+    # input("Press [enter] to continue.")'''
 
