@@ -254,6 +254,37 @@ def next_neighbour(instance, curr_sol):
         element_count = element_count - instance.matrix[rs]
 
 
+def next_random_neighbour(instance, curr_sol, n_subsets=1):
+    # copy solution list
+    curr_sol = curr_sol.copy()
+
+    # calculate list of subsets that are not in the current solution
+    remaining_subsets = instance.subset_universe_set.difference(set(curr_sol))
+
+    n_subsets = min(n_subsets, len(remaining_subsets))
+
+    print(n_subsets)
+    print(len(remaining_subsets))
+
+    # calculate array containing the number of times each element has been selected
+    element_count = np.zeros(instance.matrix.shape[1])
+
+    for s in curr_sol:
+        element_count = element_count + instance.matrix[s]
+
+    while True:
+        new_subsets = random.sample(remaining_subsets, n_subsets)
+
+        curr_sol.extend(new_subsets)
+        count_addition = np.sum(instance.matrix[new_subsets], axis=0)
+        element_count = element_count + count_addition
+
+        yield remove_redundant(instance, curr_sol, element_count, return_cost=True)
+
+        del curr_sol[-n_subsets:]
+        element_count = element_count - count_addition
+
+
 def improvement_heuristic(instance, selected_subsets, first_improvement=True):
     curr_sol = selected_subsets.copy()  # current solution
     curr_sol_cost = instance.calculate_cost(curr_sol)  # current solution cost
@@ -707,6 +738,69 @@ def assignment2(instance_objs):
         print('')
 
 
+def test_neighbours(instance):
+    sol = CH1(instance)
+    sol = remove_redundant(instance, sol)
+    cost = instance.calculate_cost(sol)
+
+    better = 0
+    equal = 0
+    equal_but_diff = 0
+    worse = 0
+
+    for new_sol, new_sol_cost in next_neighbour(instance, sol):
+
+        if new_sol_cost < cost:
+            better += 1
+        elif new_sol_cost == cost:
+            equal += 1
+
+            if set(new_sol) != set(sol):
+                equal_but_diff += 1
+        else:
+            worse += 1
+
+    print('better: ' + str(better))
+    print('equal: ' + str(equal))
+    print('equal_but_diff: ' + str(equal_but_diff))
+    print('worse: ' + str(worse))
+    print('total: ' + str(better+equal+worse))
+    print()
+
+
+def test_random_neighbours(instance):
+    sol = CH1(instance)
+    sol = remove_redundant(instance, sol)
+    cost = instance.calculate_cost(sol)
+
+    better = 0
+    equal = 0
+    equal_but_diff = 0
+    worse = 0
+
+    for i, (new_sol, new_sol_cost) in enumerate(next_random_neighbour(instance, sol, 50)):
+
+        if new_sol_cost < cost:
+            better += 1
+        elif new_sol_cost == cost:
+            equal += 1
+
+            if set(new_sol) != set(sol):
+                equal_but_diff += 1
+        else:
+            worse += 1
+
+        if i == len(instance.subsets) * 10 - 1:
+            break
+
+    print('better: ' + str(better))
+    print('equal: ' + str(equal))
+    print('equal_but_diff: ' + str(equal_but_diff))
+    print('worse: ' + str(worse))
+    print('total: ' + str(better + equal + worse))
+    print()
+
+
 def main():
     instances = [['SCP-Instances/scp42.txt', 512],
                  ['SCP-Instances/scp43.txt', 516],
@@ -756,8 +850,12 @@ def main():
     for i in instances:
         instance_objs.append(Instance(i[0], i[1]))
 
-    assignment1(instance_objs)
-    assignment2(instance_objs)
+    # assignment1(instance_objs)
+    # assignment2(instance_objs)
+
+    for instance in instance_objs:
+        # test_neighbours(instance)
+        test_random_neighbours(instance)
 
 
 main()
