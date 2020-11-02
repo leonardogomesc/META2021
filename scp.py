@@ -117,6 +117,8 @@ def remove_redundant(instance, selected_subsets, element_count=None, return_extr
     # calculate cost
     cost = 0
 
+    final_subsets = []
+
     i = len(selected_subsets) - 1
 
     while i >= 0:
@@ -124,20 +126,18 @@ def remove_redundant(instance, selected_subsets, element_count=None, return_extr
         element_count = element_count - instance.matrix[selected_subsets[i]]
 
         # check if there is an uncovered element
-        if 0 not in element_count:
-            # remove subset if there is not an uncovered element
-            selected_subsets.pop(i)
-        else:
+        if 0 in element_count:
             # add subset if there is an uncovered element
             element_count = element_count + instance.matrix[selected_subsets[i]]
             cost += instance.subset_weights[selected_subsets[i]]
+            final_subsets.append(selected_subsets[i])
 
         i -= 1
 
     if return_extra:
-        return selected_subsets, cost, element_count
+        return final_subsets, cost, element_count
 
-    return selected_subsets
+    return final_subsets
 
 
 # choose subset with min heuristic value
@@ -356,8 +356,9 @@ def simulated_annealing(instance, selected_subsets):
                 curr_iter = next_random_neighbour(instance, new_sol, element_count=new_element_count, n_subsets=n_subsets)
                 iter_without_change = 0
 
+            timestep += 1
+
         temperature *= cooling_ratio
-        timestep += 1
 
     return curr_sol
 
