@@ -332,12 +332,12 @@ def simulated_annealing(instance, selected_subsets):
     iter_without_change = 0
 
     max_iter_without_change = 10
-    fixed_iter = 10000
+    fixed_iter = 20000
     n_subsets = 10
 
-    temperature = 100
+    temperature = 20
     cooling_ratio = 0.95
-
+    #537
     timestep = 0
 
     curr_sol = selected_subsets.copy()  # current solution
