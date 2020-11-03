@@ -144,6 +144,35 @@ def remove_redundant(instance, selected_subsets, element_count=None, return_extr
 
 
 # choose subset with min heuristic value
+def CH1_GR(instance, alpha=0.1):
+    selected_subsets = []  # index of selected subsets
+    uncovered_elements = instance.universe_set  # uncovered elements
+
+    while len(uncovered_elements) > 0:
+        # calculate subsets with at least one uncovered element
+        aval_subsets = []
+
+        for e in uncovered_elements:
+            aval_subsets.extend(instance.elem_subsets[e])
+
+        aval_subsets = list(set(aval_subsets))
+
+        aval_subsets.sort(key=lambda s: instance.subset_weights[s] / len(instance.subsets_set[s].intersection(uncovered_elements)))
+
+        n = max(1, int(alpha*len(aval_subsets)))
+
+        subset = aval_subsets[random.randint(0, n-1)]
+
+        # add subset to list
+        selected_subsets.append(subset)
+
+        # calculate uncovered elements
+        uncovered_elements = uncovered_elements.difference(instance.subsets_set[subset])
+
+    return selected_subsets
+
+
+# choose subset with min heuristic value
 def CH1(instance):
     selected_subsets = []  # index of selected subsets
     uncovered_elements = instance.universe_set  # uncovered elements
@@ -331,19 +360,25 @@ def simulated_annealing(instance, selected_subsets):
 
     iter_without_change = 0
 
-    max_iter_without_change = 10
+    max_iter_without_change = 50
     fixed_iter = 20000
     n_subsets = 10
 
-    temperature = 20
+    temperature = 2
     cooling_ratio = 0.95
-    #537
-    timestep = 0
+
+    timestep = 1
 
     curr_sol = selected_subsets.copy()  # current solution
     curr_sol_cost = instance.calculate_cost(curr_sol)  # current solution cost
     curr_element_count = instance.calculate_element_count(curr_sol)
     curr_iter = next_random_neighbour(instance, curr_sol, element_count=curr_element_count, n_subsets=n_subsets)
+
+    global_sol = curr_sol
+    global_sol_cost = curr_sol_cost
+
+    data_x.append(0)
+    data_y.append(curr_sol_cost)
 
     while iter_without_change < max_iter_without_change:
         iter_without_change += 1
@@ -365,11 +400,15 @@ def simulated_annealing(instance, selected_subsets):
                     update_sol = True
 
             if update_sol:
+                if new_sol_cost < global_sol_cost:
+                    global_sol = new_sol
+                    global_sol_cost = new_sol_cost
+                    iter_without_change = 0
+
                 curr_sol = new_sol
                 curr_sol_cost = new_sol_cost
                 curr_element_count = new_element_count
                 curr_iter = next_random_neighbour(instance, new_sol, element_count=new_element_count, n_subsets=n_subsets)
-                iter_without_change = 0
 
                 data_x.append(timestep)
                 data_y.append(new_sol_cost)
@@ -391,11 +430,30 @@ def simulated_annealing(instance, selected_subsets):
         data_y = []
 
         print('\ntemp: ' + str(temperature))
-        print(curr_sol_cost)
+        print(global_sol_cost)
+        print(iter_without_change)
 
     print(timestep)
 
-    return curr_sol
+    return global_sol
+
+
+def grasp(instance, max_iter, alpha):
+    global_sol = None
+    global_sol_cost = float('inf')
+
+    for _ in range(max_iter):
+        selected_subsets = CH1_GR(instance, alpha=alpha)
+        selected_subsets = improvement_heuristic(instance, selected_subsets, first_improvement=True)
+
+        cost = instance.calculate_cost(selected_subsets)
+
+        if cost < global_sol_cost:
+            global_sol = selected_subsets
+            global_sol_cost = cost
+            print(global_sol_cost)
+
+    return global_sol
 
 
 def assignment1(instance_objs):
@@ -949,12 +1007,14 @@ def main():
         # test_neighbours(instance)
         # test_random_neighbours(instance)
 
-    index = 0
+    '''index = 0
 
     sol = CH1(instance_objs[index])
     sol = remove_redundant(instance_objs[index], sol)
 
-    sol = simulated_annealing(instance_objs[index], sol)
+    sol = simulated_annealing(instance_objs[index], sol)'''
+
+    grasp(instance_objs[0], 500, 0.05)
 
 
 main()
