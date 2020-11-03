@@ -347,7 +347,7 @@ def improvement_heuristic(instance, selected_subsets, first_improvement=True):
     return curr_sol
 
 
-def simulated_annealing(instance, selected_subsets):
+def simulated_annealing(instance, selected_subsets, max_iter_without_change=50, fixed_iter=20000, n_subsets=10, temperature=2, cooling_ratio=0.95):
     plt.ion()
     plt.show()
 
@@ -359,13 +359,6 @@ def simulated_annealing(instance, selected_subsets):
     #####
 
     iter_without_change = 0
-
-    max_iter_without_change = 50
-    fixed_iter = 20000
-    n_subsets = 10
-
-    temperature = 2
-    cooling_ratio = 0.95
 
     timestep = 1
 
@@ -887,7 +880,7 @@ def assignment3_grasp(instance_objs):
     statistic_data = [[] for _ in range(len(instance_objs))]
 
     alpha = [0.01, 0.05, 0.10, 0.15, 0.20]
-    max_iter = 1
+    max_iter = 100
 
     for a in alpha:
 
@@ -911,8 +904,8 @@ def assignment3_grasp(instance_objs):
             counter += 1
             print(counter)
 
-        print('alpha = ' + str(a) + ' Percentage Deviation: ' + str(sum(pd) / len(pd)) + ' %')
-        file.write('alpha = ' + str(a) + ' Percentage Deviation: ' + str(sum(pd) / len(pd)) + ' %' + '\n')
+        print('alpha: ' + str(a) + ' iter: ' + str(max_iter) + ' Percentage Deviation: ' + str(sum(pd) / len(pd)) + ' %')
+        file.write('alpha: ' + str(a) + ' iter: ' + str(max_iter) + ' Percentage Deviation: ' + str(sum(pd) / len(pd)) + ' %' + '\n')
 
         print('time: ' + str(time.time() - start) + '\n\n')
         file.write('time: ' + str(time.time() - start) + '\n\n' + '\n')
