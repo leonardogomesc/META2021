@@ -101,12 +101,15 @@ class Instance:
         return element_count
 
 
-def remove_redundant(instance, selected_subsets, element_count=None, return_extra=False):
+def remove_redundant(instance, selected_subsets, element_count=None, return_extra=False, random_shuffle=False):
     # copy selected subsets
     selected_subsets = selected_subsets.copy()
 
     # sort by cost per element
-    selected_subsets.sort(key=lambda e: instance.subset_weights[e]/len(instance.subsets[e]))
+    if random_shuffle:
+        random.shuffle(selected_subsets)
+    else:
+        selected_subsets.sort(key=lambda e: instance.subset_weights[e]/len(instance.subsets[e]))
 
     # calculate or copy array containing the number of times each element has been selected
     if element_count is None:
@@ -283,7 +286,7 @@ def next_random_neighbour(instance, curr_sol, element_count=None, n_subsets=1):
         count_addition = np.sum(instance.matrix[new_subsets], axis=0)
         element_count = element_count + count_addition
 
-        yield remove_redundant(instance, curr_sol, element_count=element_count, return_extra=True)
+        yield remove_redundant(instance, curr_sol, element_count=element_count, return_extra=True, random_shuffle=True)
 
         del curr_sol[-n_subsets:]
         element_count = element_count - count_addition
@@ -316,12 +319,24 @@ def improvement_heuristic(instance, selected_subsets, first_improvement=True):
 
 
 def simulated_annealing(instance, selected_subsets):
-    iter_without_change = 0
-    fixed_iter = 10000
-    n_subsets = 50
+    plt.ion()
+    plt.show()
 
-    temperature = 432
-    cooling_ratio = 0.99
+    data_x = []
+    data_y = []
+
+    hl = plt.plot(data_x, data_y)[0]
+
+    #####
+
+    iter_without_change = 0
+
+    max_iter_without_change = 10
+    fixed_iter = 10000
+    n_subsets = 10
+
+    temperature = 100
+    cooling_ratio = 0.95
 
     timestep = 0
 
@@ -330,7 +345,7 @@ def simulated_annealing(instance, selected_subsets):
     curr_element_count = instance.calculate_element_count(curr_sol)
     curr_iter = next_random_neighbour(instance, curr_sol, element_count=curr_element_count, n_subsets=n_subsets)
 
-    while iter_without_change < 1:
+    while iter_without_change < max_iter_without_change:
         iter_without_change += 1
 
         for _ in range(fixed_iter):
@@ -356,9 +371,29 @@ def simulated_annealing(instance, selected_subsets):
                 curr_iter = next_random_neighbour(instance, new_sol, element_count=new_element_count, n_subsets=n_subsets)
                 iter_without_change = 0
 
+                data_x.append(timestep)
+                data_y.append(new_sol_cost)
+
             timestep += 1
 
         temperature *= cooling_ratio
+
+        hl.set_xdata(np.append(hl.get_xdata(), data_x))
+        hl.set_ydata(np.append(hl.get_ydata(), data_y))
+
+        ax = plt.gca()
+        ax.relim()
+        ax.autoscale_view()
+        plt.draw()
+        plt.pause(0.01)
+
+        data_x = []
+        data_y = []
+
+        print('\ntemp: ' + str(temperature))
+        print(curr_sol_cost)
+
+    print(timestep)
 
     return curr_sol
 
@@ -907,12 +942,19 @@ def main():
     for i in instances:
         instance_objs.append(Instance(i[0], i[1]))
 
-    assignment1(instance_objs)
-    assignment2(instance_objs)
+    # assignment1(instance_objs)
+    # assignment2(instance_objs)
 
     # for instance in instance_objs:
         # test_neighbours(instance)
         # test_random_neighbours(instance)
+
+    index = 0
+
+    sol = CH1(instance_objs[index])
+    sol = remove_redundant(instance_objs[index], sol)
+
+    sol = simulated_annealing(instance_objs[index], sol)
 
 
 main()
@@ -925,16 +967,16 @@ temperature = -150/ln(0.5) = 216
 2*temperature = 216*2 = 432
 '''
 
-'''
-# plt.axis([-50,50,0,10000])
+
+''''# plt.axis([-50,50,0,10000])
 plt.ion()
 plt.show()
 
 x = np.arange(-50, 51)
 for pow in range(1,5):   # plot x^1, x^2, ..., x^4
     y = [Xi**pow for Xi in x]
-    plt.plot(x, y)
+    print(plt.plot(x, y))
     plt.draw()
-    plt.pause(5)
+    plt.pause(1)
     # input("Press [enter] to continue.")'''
 
