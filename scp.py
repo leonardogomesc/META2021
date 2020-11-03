@@ -437,6 +437,7 @@ def grasp(instance, max_iter, alpha):
 
     for _ in range(max_iter):
         selected_subsets = CH1_GR(instance, alpha=alpha)
+        selected_subsets = remove_redundant(instance, selected_subsets)
         selected_subsets = improvement_heuristic(instance, selected_subsets, first_improvement=True)
 
         cost = instance.calculate_cost(selected_subsets)
