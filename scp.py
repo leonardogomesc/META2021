@@ -451,7 +451,6 @@ def grasp(instance, max_iter, alpha):
         if cost < global_sol_cost:
             global_sol = selected_subsets
             global_sol_cost = cost
-            print(global_sol_cost)
 
     return global_sol
 
@@ -882,6 +881,58 @@ def assignment2(instance_objs):
         print('')
 
 
+def assignment3_grasp(instance_objs):
+    print('Assignment 3\n')
+
+    statistic_data = [[] for _ in range(len(instance_objs))]
+
+    alpha = [0.01, 0.05, 0.10, 0.15, 0.20]
+    max_iter = 1
+
+    for a in alpha:
+
+        file = open('results1.txt', 'a')
+
+        start = time.time()
+
+        pd = []
+
+        counter = 0
+
+        for instance in instance_objs:
+            selected_subsets = grasp(instance, max_iter, a)
+
+            percentage_deviation = instance.calculate_percentage_deviation(selected_subsets)
+
+            pd.append(percentage_deviation)
+
+            statistic_data[counter].append(instance.calculate_cost(selected_subsets))
+
+            counter += 1
+            print(counter)
+
+        print('alpha = ' + str(a) + ' Percentage Deviation: ' + str(sum(pd) / len(pd)) + ' %')
+        file.write('alpha = ' + str(a) + ' Percentage Deviation: ' + str(sum(pd) / len(pd)) + ' %' + '\n')
+
+        print('time: ' + str(time.time() - start) + '\n\n')
+        file.write('time: ' + str(time.time() - start) + '\n\n' + '\n')
+
+        print('Statistic Data: \n')
+        file.write('Statistic Data: \n' + '\n')
+
+        for i in statistic_data:
+            for i2 in i:
+                print(str(i2) + ' ', end='')
+                file.write(str(i2) + ' ')
+            print('')
+            file.write('\n')
+
+        print('')
+        file.write('\n')
+
+        file.close()
+
+
 def test_neighbours(instance):
     sol = CH1(instance)
     sol = remove_redundant(instance, sol)
@@ -1002,6 +1053,7 @@ def main():
 
     # assignment1(instance_objs)
     # assignment2(instance_objs)
+    assignment3_grasp(instance_objs)
 
     # for instance in instance_objs:
         # test_neighbours(instance)
@@ -1013,8 +1065,6 @@ def main():
     sol = remove_redundant(instance_objs[index], sol)
 
     sol = simulated_annealing(instance_objs[index], sol)'''
-
-    grasp(instance_objs[0], 500, 0.05)
 
 
 main()
