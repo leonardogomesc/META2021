@@ -348,13 +348,13 @@ def improvement_heuristic(instance, selected_subsets, first_improvement=True):
 
 
 def simulated_annealing(instance, selected_subsets, max_iter_without_change=50, fixed_iter=20000, n_subsets=10, temperature=2, cooling_ratio=0.95):
-    plt.ion()
+    '''plt.ion()
     plt.show()
 
     data_x = []
     data_y = []
 
-    hl = plt.plot(data_x, data_y)[0]
+    hl = plt.plot(data_x, data_y)[0]'''
 
     #####
 
@@ -370,8 +370,8 @@ def simulated_annealing(instance, selected_subsets, max_iter_without_change=50, 
     global_sol = curr_sol
     global_sol_cost = curr_sol_cost
 
-    data_x.append(0)
-    data_y.append(curr_sol_cost)
+    '''data_x.append(0)
+    data_y.append(curr_sol_cost)'''
 
     while iter_without_change < max_iter_without_change:
         iter_without_change += 1
@@ -403,14 +403,14 @@ def simulated_annealing(instance, selected_subsets, max_iter_without_change=50, 
                 curr_element_count = new_element_count
                 curr_iter = next_random_neighbour(instance, new_sol, element_count=new_element_count, n_subsets=n_subsets)
 
-                data_x.append(timestep)
-                data_y.append(new_sol_cost)
+                '''data_x.append(timestep)
+                data_y.append(new_sol_cost)'''
 
             timestep += 1
 
         temperature *= cooling_ratio
 
-        hl.set_xdata(np.append(hl.get_xdata(), data_x))
+        '''hl.set_xdata(np.append(hl.get_xdata(), data_x))
         hl.set_ydata(np.append(hl.get_ydata(), data_y))
 
         ax = plt.gca()
@@ -420,13 +420,16 @@ def simulated_annealing(instance, selected_subsets, max_iter_without_change=50, 
         plt.pause(0.01)
 
         data_x = []
-        data_y = []
+        data_y = []'''
 
         print('\ntemp: ' + str(temperature))
         print(global_sol_cost)
         print(iter_without_change)
 
     print(timestep)
+
+    '''while True:
+        plt.pause(0.1)'''
 
     return global_sol
 
@@ -927,6 +930,55 @@ def assignment3_grasp(instance_objs):
         file.close()
 
 
+def assignment3_sa(instance_objs):
+    print('Assignment 3\n')
+
+    statistic_data = [[] for _ in range(len(instance_objs))]
+
+    file = open('results3.txt', 'a')
+
+    start = time.time()
+
+    pd = []
+
+    counter = 0
+
+    for instance in instance_objs:
+        selected_subsets = CH1(instance)
+        selected_subsets = remove_redundant(instance, selected_subsets)
+        selected_subsets = simulated_annealing(instance, selected_subsets)
+
+        percentage_deviation = instance.calculate_percentage_deviation(selected_subsets)
+
+        pd.append(percentage_deviation)
+
+        statistic_data[counter].append(instance.calculate_cost(selected_subsets))
+
+        counter += 1
+        print(counter)
+
+    print('Percentage Deviation: ' + str(sum(pd) / len(pd)) + ' %')
+    file.write('Percentage Deviation: ' + str(sum(pd) / len(pd)) + ' %' + '\n')
+
+    print('time: ' + str(time.time() - start) + '\n\n')
+    file.write('time: ' + str(time.time() - start) + '\n\n' + '\n')
+
+    print('Statistic Data: \n')
+    file.write('Statistic Data: \n' + '\n')
+
+    for i in statistic_data:
+        for i2 in i:
+            print(str(i2) + ' ', end='')
+            file.write(str(i2) + ' ')
+        print('')
+        file.write('\n')
+
+    print('')
+    file.write('\n')
+
+    file.close()
+
+
 def test_neighbours(instance):
     sol = CH1(instance)
     sol = remove_redundant(instance, sol)
@@ -1047,7 +1099,8 @@ def main():
 
     # assignment1(instance_objs)
     # assignment2(instance_objs)
-    assignment3_grasp(instance_objs)
+    # assignment3_grasp(instance_objs)
+    assignment3_sa(instance_objs)
 
     # for instance in instance_objs:
         # test_neighbours(instance)
